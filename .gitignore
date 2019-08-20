@@ -65,3 +65,5 @@ typings/
 dist/
 
 src/rlapi
+
+config/local.json

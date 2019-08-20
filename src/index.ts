@@ -1,3 +1,4 @@
+import config from "config";
 import express from "express";
 
 import * as baseController from "./controllers/base";
@@ -10,4 +11,6 @@ app.get('/', baseController.index);
 app.post('/webhooks/routerlimits', rlWebhookController.router);
 app.post('/webhooks/billing', billingWebhookController.router);
 
-app.listen(8080);
+const apiPort = config.has("api.listenPort") ? config.get("api.listenPort") : 8080;
+app.listen(apiPort);
+console.log(`API listening on port ${apiPort}`);

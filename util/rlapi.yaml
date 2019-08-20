@@ -1,0 +1,2073 @@
+swagger: '2.0'
+info:
+  version: 1.0.0
+  title: Router Limits API
+  description: >-
+    API partners must include a "Partner-Name: YourCompanyHere" header in their
+    requests, replacing "YourCompanyHere" with the name of their company. Router
+    Limits reserves the right to block API requests that do not include this
+    header.
+
+
+    These documents are protected as *CONFIDENTIAL*. All standard non-disclosure
+    terms apply.
+  license:
+    name: 'All Rights Reserved, Copyright 2018'
+tags:
+  - name: user
+    description: Operations on or about users
+  - name: auth
+    description: Authentication-related operations
+  - name: account
+    description: Operations on or about accounts
+  - name: subscription
+    description: Operations on or about account subscriptions
+  - name: organization
+    description: Operations related to Router Limits Pro organizations
+  - name: plans
+    description: Operations related to plans that accounts can be subscribed to
+  - name: perftest
+    description: Operations related to performance (bandwidth and latency) testing
+schemes:
+  - https
+host: api.routerlimits.com
+securityDefinitions:
+  userApiKeyAuth:
+    type: apiKey
+    in: header
+    name: X-API-KEY
+  deviceApiKeyAuth:
+    type: apiKey
+    in: header
+    name: X-API-KEY
+  routerApiKeyAuth:
+    type: apiKey
+    in: header
+    name: X-API-KEY
+definitions:
+  AccountCreateResponse:
+    type: object
+    additionalProperties: false
+    required:
+      - accountId
+    properties:
+      accountId:
+        type: string
+        description: the id of the account that was created
+  AccountSubscriptionsListResponse:
+    type: object
+    additionalProperties: false
+    required:
+      - id
+      - subscriptionStartTime
+      - currentPeriodEndTime
+      - plan
+    properties:
+      id:
+        type: string
+        example: sub_f23F9s8udf
+        description: the id of the subscription
+      subscriptionStartTime:
+        type: integer
+        format: int32
+        example: 1234567890
+        description: UNIX timestamp when the subscription began
+      commitmentEndTime:
+        type: integer
+        format: int32
+        example: 1234567890
+        description: UNIX timestamp of when the subscription's commitment ends
+      trialEndTime:
+        type: integer
+        format: int32
+        example: 1234567890
+        description: UNIX timestamp of when the subscription's trial period ends
+      currentPeriodEndTime:
+        type: integer
+        format: int32
+        example: 1234567890
+        description: UNIX timestamp of when the subscription's current billing period ends
+      canCancel:
+        type: boolean
+        description: >-
+          true if the plan can be canceled. It's possible to cancel plans in
+          commitments sometimes due to grace periods. false if the plan can't be
+          canceled (probably due to a commitment)
+      plan:
+        $ref: '#/definitions/Plan'
+  EmailAvailabilityReturn:
+    type: object
+    additionalProperties: false
+    required:
+      - status
+    properties:
+      status:
+        type: string
+        enum:
+          - available
+          - unavailable
+      pro:
+        type: boolean
+        description: true if the owner of the email address is a 'Pro' user
+      verifiedAt:
+        type: integer
+        format: int32
+  Plan:
+    type: object
+    required:
+      - id
+      - name
+      - price
+      - flags
+    additionalProperties: false
+    properties:
+      id:
+        type: string
+        example: awesomePlan
+        description: the id of the plan
+      name:
+        type: string
+        example: Premium Extreme
+        description: the name of the plan
+      commitmentInfo:
+        type: object
+        additionalProperties: false
+        required:
+          - duration
+          - discount
+        properties:
+          duration:
+            type: integer
+            format: int32
+            description: number of integer months that the commitment lasts
+            example: 1
+          discount:
+            type: number
+            format: float
+            description: >-
+              amount of discount that is applied during commitment period. In
+              same currency as the plan's pricing
+            example: 5.99
+      price:
+        type: object
+        additionalProperties: false
+        required:
+          - amount
+          - currency
+          - interval
+          - intervalCount
+        properties:
+          amount:
+            type: number
+            format: float
+            example: 19.99
+            description: >-
+              the plan costs this much every intervalCount intervals in units of
+              currency
+          currency:
+            type: string
+            example: usd
+            description: three-letter currency code of the price
+          interval:
+            type: string
+            enum:
+              - day
+              - week
+              - month
+              - year
+            description: billing occurs at this kind of interval
+          intervalCount:
+            type: integer
+            format: int32
+            description: billing will occur once for every intervalCount interval(s)
+      trialPeriod:
+        type: integer
+        format: int32
+        description: number of days of free trial on the plan
+        example: 30
+      flags:
+        type: array
+        description: a set of flags that convey information about the plan
+        items:
+          type: string
+          example: premium
+  AccountsListResponse:
+    type: object
+    additionalProperties: false
+    required:
+      - id
+      - userId
+      - createdAt
+      - accountBalance
+      - trialsUsed
+      - everBeenActive
+      - entitlements
+    properties:
+      id:
+        type: string
+        description: the id of the account
+        example: gdfl4j
+      userId:
+        type: string
+        description: the id of the user that owns the account
+        example: dls93
+      user:
+        $ref: '#/definitions/CommonUserReturn'
+      routerPairingCode:
+        type: string
+        description: >-
+          the pairing code (or MAC for legacy routers) of the router attached to
+          the account
+        example: '123451234512345'
+      router:
+        $ref: '#/definitions/CommonRouterReturn'
+      createdAt:
+        type: integer
+        format: int32
+        example: 1234567890
+        description: UNIX timestamp of the time when the account was created
+      parentOrganizationId:
+        type: string
+        description: the id of the organization that gets credit for the account
+        example: ugjw4
+      parentUserId:
+        type: string
+        description: the id of the that gets credit for the account
+        example: g4g9df
+      accountBalance:
+        type: number
+        format: float
+        example: 0.01
+        description: The amount of credit that account has in US dollars
+      trialsUsed:
+        type: array
+        items:
+          type: string
+          example: coolPlanId
+        description: List of plans that the account has already used trial on
+      everBeenActive:
+        type: boolean
+        description: True if the account has ever been activated. False otherwise.
+      entitlements:
+        description: >-
+          An array of entitlement objects, describing the things that the
+          account can do
+        type: array
+        items:
+          type: object
+          required:
+            - name
+            - value
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              example: CAN_ACCESS_WIDGETS
+              description: the name of the entitlement
+            value:
+              type: integer
+              format: int32
+              example: 1
+              description: The value of the entitlement
+  AuthenticateResponse:
+    type: object
+    required:
+      - type
+    additionalProperties: false
+    example:
+      type: success
+      apiKey: 673402517993af085063c2cc8cb1fc17299292a224b3dde390d93b58
+      apikeyExpiration: 86400
+    properties:
+      type:
+        type: string
+        enum:
+          - success
+          - ssoOptInRequired
+        description: >-
+          the type of response. "success" indicates that the authentication was
+          successful and they the caller can have an API key. "ssoOptInRequired"
+          is only sent in response to requests to authenticate with a JWT token
+          that is valid, but has not been enabled for a user. The user must
+          opt-in to allow authentication by JWT token by the SSO partner that
+          generated the token.
+      apiKey:
+        type: string
+        example: 673402517993af085063c2cc8cb1fc17299292a224b3dde390d93b58
+        description: >-
+          Sent if type = success. An API key that can be used in requests to act
+          on behalf of the authenticated user
+      apiKeyExpiration:
+        type: integer
+        example: 86400
+        description: >-
+          Sent if type = success. The number of seconds before the API key
+          expires
+      roles:
+        type: array
+        items:
+          $ref: '#/definitions/UserRole'
+      ssoProviderId:
+        type: string
+        example: abcd1234
+        description: >-
+          Sent if type = ssoOptInRequired. The id of the SSO provider that
+          generated the token and needs to be enabled for the user for SSO to
+          occur.
+      ssoExternalUserId:
+        type: string
+        example: abcd1234
+        description: >-
+          Sent if type = ssoOptInRequired. The id that the SSO provider uses to
+          identify the user they want to login.
+  TagNamesResponse:
+    type: array
+    items:
+      type: string
+      example: SomeTagName
+  CommonUserReturn:
+    type: object
+    required:
+      - id
+      - firstName
+      - lastName
+      - email
+      - phone
+      - roles
+    additionalProperties: false
+    properties:
+      id:
+        type: string
+        description: The id of the user
+      firstName:
+        type: string
+        example: Timmy
+      lastName:
+        type: string
+        example: O'Toole
+      email:
+        type: string
+        format: email
+      phone:
+        type: string
+        example: '+18015555555'
+      address:
+        type: string
+      address2:
+        type: string
+      address3:
+        type: string
+      city:
+        type: string
+      state:
+        type: string
+      zip:
+        type: string
+      country:
+        type: string
+      roles:
+        type: array
+        items:
+          $ref: '#/definitions/UserRole'
+      accountId:
+        type: string
+        description: 'The id of the account that the user owns, if any'
+      organization:
+        $ref: '#/definitions/OrganizationResponse'
+      parentOrganization:
+        $ref: '#/definitions/OrganizationResponse'
+  CommonRouterReturn:
+    type: object
+    required:
+      - connected
+      - version
+      - oem
+      - model
+      - interfaces
+      - account
+    additionalProperties: false
+    properties:
+      connected:
+        type: boolean
+        description: 'true if the router is connected, false otherwise'
+      mac:
+        type: string
+        example: '00:11:22:33:44:55'
+        description: >-
+          For certain hardware, the identifying MAC address of the device
+          (RL-100, RL-150, RL-160).
+      publicIp:
+        type: string
+        format: ipv4
+        example: 165.45.23.3
+        description: 'The current public IP address of the router, if known'
+      version:
+        type: string
+        example: '2.5'
+        description: the version of the Router Limits software running on the hardware
+      oem:
+        type: string
+        example: 'ACME, Inc.'
+        description: the manufacturer/provider of the hardware. May be null
+      model:
+        type: string
+        example: MegaRouter
+        description: the model of the device
+      interfaces:
+        type: array
+        items:
+          type: object
+          required:
+            - name
+            - mac
+            - ip
+          description: a list of objects describing network interfaces of the hardware
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              example: eth0
+              description: the name of the network interface
+            mac:
+              type: string
+              example: '00:11:22:33:44:55'
+              description: the MAC address of the network interface
+            ip:
+              type: string
+              format: ipv4
+              example: 192.168.6.1
+              description: >-
+                the IP address of the interface. Currently only IPv4 addresses
+                are supported here
+      pairingCode:
+        type: string
+        example: '555554444477777'
+        description: >-
+          For hardware that supports pairing codes, the pairing code the
+          hardware.
+      seenAt:
+        type: string
+        example: '2017-02-07T20:28:12.000Z'
+        description: >-
+          If the router has ever connected, the router was connected at least as
+          recently as this timestamp.
+      account:
+        type: object
+        additionalProperties: false
+        description: account information about the account that is paired with the router
+        properties:
+          id:
+            type: string
+            example: gbkxl95j
+            description: >-
+              the id of the account that has activated this router. Not set the
+              router is not activated on an account
+          parentOrganizationId:
+            type: string
+            example: ac895gg4
+            description: the id of the organization that activated the account
+      capabilities:
+        $ref: '#/definitions/CommonRouterCapabilities'
+  CommonRouterCapabilities:
+    description: >-
+      A list of capabilities that this router has. These capabilities can vary
+      depending on the model of the router and the firmware/client version it is
+      running.
+    type: array
+    items:
+      type: string
+      enum:
+        - perftest
+        - bandwidth
+  OrganizationCreateResponse:
+    type: object
+    additionalProperties: false
+    required:
+      - organizationId
+    properties:
+      organizationId:
+        type: string
+        description: a unique id for the organization that was created
+        example: 5lkdd7sd
+  PluginType:
+    type: string
+    enum:
+      - ticketing
+  OrganizationResponse:
+    type: object
+    additionalProperties: false
+    required:
+      - id
+      - name
+    description: >-
+      Information about an organization. Some endpoints may only return a subset
+      of these fields.
+    properties:
+      id:
+        type: string
+        example: 6jf8sj5n
+        description: unique id of the organization
+      name:
+        type: string
+        example: 'ACME, Inc.'
+        description: Name of the organization
+      address:
+        type: string
+        example: 123 Fake Street
+      address2:
+        type: string
+        example: Suite 123
+      address3:
+        type: string
+        example: Cupboard under the stairs
+      city:
+        type: string
+        example: Springfield
+      state:
+        type: string
+        example: GA
+      zip:
+        type: string
+        example: '12345'
+      country:
+        type: string
+        example: United States
+      allowInvoicing:
+        type: boolean
+        description: >-
+          True if the organization is allowed to bill customers directly. False
+          if Router Limits handles billing
+      allowWhiteLabel:
+        type: boolean
+        description: White labeled interface is allowed for this Organization
+      allowCoLabel:
+        type: boolean
+        description: Co-labeled interface is allowed for this Organization
+      enrolledInRMR:
+        type: boolean
+        description: >-
+          True if the organization is enrolled in an RMR sharing plan. False
+          otherwise
+      enabledPluginTypes:
+        type: array
+        items:
+          $ref: '#/definitions/PluginType'
+      styles:
+        type: object
+        description: Custom styling for the Organization's users
+        additionalProperties: false
+        properties:
+          logo:
+            type: string
+            description: Public URL to uploaded logo of Organization
+            example: 'https://static.routerlimits.com/organizations/test-34dg734m.png'
+          logo2:
+            type: string
+            description: >-
+              Public URL to uploaded a logo for an Organization to be placed on
+              the login screen
+            example: 'https://static.routerlimits.com/organizations/test-34dg734m.png'
+          favicon:
+            type: string
+            description: Public URL to uploaded 16x16 favicon for an organization
+            example: 'https://static.routerlimits.com/organizations/test-34dg734m.png'
+          colorPrimary:
+            type: string
+            example: '#ff0000'
+          colorPrimaryHover:
+            type: string
+            example: '#ff0000'
+          colorSecondary:
+            type: string
+            example: '#ff0000'
+          colorTertiary:
+            type: string
+            example: '#ff0000'
+          colorTextHeader:
+            type: string
+            example: '#ff0000'
+          colorTextPrimary:
+            type: string
+            example: '#ff0000'
+          colorTextSecondary:
+            type: string
+            example: '#ff0000'
+          colorSideNav:
+            type: string
+            example: '#ff0000'
+          colorSuccess:
+            type: string
+            example: '#ff0000'
+          colorWarn:
+            type: string
+            example: '#ff0000'
+          portalTitle:
+            type: string
+            description: >-
+              the title that should be used for the HTML title tag on the
+              whitelabeled portal. If null is set, the organization name will be
+              used.
+            example: ACME Protection Portal
+          emailFromAddress:
+            type: string
+            format: email
+          emailReplyToAddress:
+            type: string
+            format: email
+          emailFromName:
+            type: string
+          emailNoun:
+            type: string
+            description: >-
+              A proper noun that should be used in emails in place of 'Router
+              Limits'. If null, 'Router Limits' will be used.
+      tags:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              type: string
+            value:
+              type: string
+          additionalProperties: false
+          required:
+            - name
+            - value
+  Tags:
+    type: array
+    description: tags for an entity
+    items:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - value
+      properties:
+        name:
+          type: string
+          description: the name of the tag
+          example: key
+        value:
+          type: string
+          description: the value of the tag
+          example: value
+  PerftestType:
+    type: string
+    enum:
+      - donotuse
+      - download
+      - upload
+      - latency
+  PerftestResponse:
+    type: object
+    required:
+      - id
+      - type
+      - created
+      - creationType
+      - status
+    properties:
+      id:
+        type: string
+        description: a unique id for the test
+        example: llkh5g
+      type:
+        $ref: '#/definitions/PerftestType'
+      creationTime:
+        type: integer
+        format: int32
+        description: UNIX timestamp of when the performance test was requested/created
+        example: 1234567890
+      startTime:
+        type: integer
+        format: int32
+        description: >-
+          UNIX timestamp of when the test started running. If null, the test has
+          not started (or completed)
+        example: null
+      endTime:
+        type: integer
+        format: int32
+        description: >-
+          UNIX timestamp of when the test completed. If null, the test has not
+          completed
+        example: null
+      result:
+        type: integer
+        description: a number describing the outcome of the test
+        example: 50
+      units:
+        type: string
+        description: string describing the units of the result
+        enum:
+          - bytes/second
+          - milliseconds
+      duration:
+        type: integer
+        description: >-
+          The number of seconds that the upload or download bandwidth test will
+          run (or did run). This property is not valid for latency tests
+      creationType:
+        type: string
+        enum:
+          - manual
+          - scheduled
+      status:
+        $ref: '#/definitions/PerftestStatus'
+      serverName:
+        type: string
+        example: Los Angeles 14
+        description: >-
+          The name of the server that the test ran against. This will only be
+          populated if the test finished successfully
+      serverLat:
+        type: number
+        example: 47.5079695
+        description: >-
+          The approximate latitude of the server that the test ran against. This
+          will only be populated if the test finished successfully
+      serverLon:
+        type: number
+        example: -121.7391152
+        description: >-
+          The approximate longitude of the server that the test ran against.
+          This will only be populated if the test finished successfully
+  PerftestStatus:
+    type: string
+    enum:
+      - pending
+      - error
+      - completed
+  AccountsPerftestCreateResponse:
+    type: object
+    additionalProperties: false
+    properties:
+      id:
+        type: string
+        description: id of the performance test request that has been created
+        example: uw2e3d
+    required:
+      - id
+  AccountsPerftestSettingsInterval:
+    type: string
+    enum:
+      - minutely
+      - hourly
+      - 4xday
+      - daily
+      - weekly
+      - monthly
+    description: >-
+      Set to null to disable automatic schedule. Minutely testing interval only
+      allowed for latency tests
+    example: daily
+  AccountsPerftestSettings:
+    type: object
+    additionalProperties: false
+    properties:
+      expectations:
+        type: object
+        additionalProperties: false
+        properties:
+          upload:
+            type: integer
+            example: 50000
+            description: >-
+              the expected performance of an upload test in bytes/second. If
+              null, expectation is reset
+          download:
+            type: integer
+            example: 60000
+            description: >-
+              the expected performance of a download test in bytes/second. If
+              null, expectation is reset
+      scheduling:
+        type: object
+        additionalProperties: false
+        required:
+          - upload
+          - download
+          - latency
+        properties:
+          upload:
+            type: object
+            additionalProperties: false
+            properties:
+              interval:
+                $ref: '#/definitions/AccountsPerftestSettingsInterval'
+              allowedIntervals:
+                type: array
+                items:
+                  $ref: '#/definitions/AccountsPerftestSettingsInterval'
+                description: A list of allowed values for the interval field.
+                example:
+                  - daily
+                  - weekly
+                  - monthly
+              duration:
+                type: integer
+                example: 15
+                description: >-
+                  Integer number of seconds that automatic scheduled tests
+                  should run. Currently only allowed value is 15
+              delayLoadUp:
+                type: integer
+                example: 4000
+                description: >-
+                  If current upload bandwidth usage exceeds this many
+                  bytes/second, the automatic test can be delayed for one
+                  minute. If set to null, delay is disabled and tests will run
+                  as scheduled regardless of bandwidth usage. Currently only
+                  allowed value is 4000 (32 kbps)
+              delayLoadDown:
+                type: integer
+                example: 8000
+                description: >-
+                  If current download bandwidth usage exceeds this many
+                  bytes/second, the automatic test can be delayed for one
+                  minute. If set to null, delay is disabled and test will run as
+                  scheduled regardless of bandwidth usage. Currently only
+                  allowed value is 8000 (64 kbps)
+          download:
+            type: object
+            additionalProperties: false
+            properties:
+              interval:
+                $ref: '#/definitions/AccountsPerftestSettingsInterval'
+              allowedIntervals:
+                type: array
+                items:
+                  $ref: '#/definitions/AccountsPerftestSettingsInterval'
+                description: A list of allowed values for the interval field.
+                example:
+                  - daily
+                  - weekly
+                  - monthly
+              duration:
+                type: integer
+                example: 15
+                description: >-
+                  Integer number of seconds that automatic scheduled tests
+                  should run. Currently only allowed value is 15
+              delayLoadUp:
+                type: integer
+                example: 4000
+                description: >-
+                  If current upload bandwidth usage exceeds this many
+                  bytes/second, the automatic test can be delayed for one
+                  minute. If set to null, delay is disabled and tests will run
+                  as scheduled regardless of bandwidth usage. Currently only
+                  allowed value is 4000 (32 kbps)
+              delayLoadDown:
+                type: integer
+                example: 8000
+                description: >-
+                  If current download bandwidth usage exceeds this many
+                  bytes/second, the automatic test can be delayed for one
+                  minute. If set to null, delay is disabled and test will run as
+                  scheduled regardless of bandwidth usage. Currently only
+                  allowed value is 8000 (64 kbps)
+          latency:
+            type: object
+            additionalProperties: false
+            properties:
+              interval:
+                $ref: '#/definitions/AccountsPerftestSettingsInterval'
+              allowedIntervals:
+                type: array
+                items:
+                  $ref: '#/definitions/AccountsPerftestSettingsInterval'
+                description: A list of allowed values for the interval field.
+                example:
+                  - minutely
+                  - hourly
+                  - daily
+                  - weekly
+                  - monthly
+              delayLoadUp:
+                type: integer
+                example: 4000
+                description: >-
+                  If current upload bandwidth usage exceeds this many
+                  bytes/second, the automatic test can be delayed for one
+                  minute. If set to null, delay is disabled and tests will run
+                  as scheduled regardless of bandwidth usage. Currently only
+                  allowed value is 4000 (32 kbps)
+              delayLoadDown:
+                type: integer
+                example: 8000
+                description: >-
+                  If current download bandwidth usage exceeds this many
+                  bytes/second, the automatic test can be delayed for one
+                  minute. If set to null, delay is disabled and test will run as
+                  scheduled regardless of bandwidth usage. Currently only
+                  allowed value is 8000 (64 kbps)
+  AccountsPerftestListResponse:
+    type: object
+    additionalProperties: false
+    required:
+      - data
+      - hasMore
+    properties:
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/PerftestResponse'
+      hasMore:
+        type: boolean
+      lastEvaluatedKey:
+        type: string
+        example: glasdl3
+  Id:
+    type: string
+    description: An opaque string identifier for a resource
+  UserListResponse:
+    type: array
+    items:
+      $ref: '#/definitions/CommonUserReturn'
+  UserCreateResponse:
+    type: object
+    required:
+      - userId
+    additionalProperties: false
+    properties:
+      userId:
+        $ref: '#/definitions/Id'
+  UserRole:
+    type: string
+    description: Describes a role that a user might have such as pro or admin
+    enum:
+      - pro
+      - admin
+      - activated
+paths:
+  /accounts:
+    get:
+      security:
+        - userApiKeyAuth: []
+      tags:
+        - account
+      summary: Gets a list of accounts that the user has the right to see
+      description: >-
+        Gets a list of accounts that the user has the right to see. Which
+        accounts a user can see depends on whether they are a normal end-user or
+        a member of an organization.
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: List of accounts retrieved
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AccountsListResponse'
+    post:
+      security:
+        - userApiKeyAuth: []
+      tags:
+        - account
+      summary: Create a new account
+      description: >-
+        Used to create a new account. Can be called by end users to create their
+        own account or by pros to create accounts that their organization will
+        receive credit for.
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      responses:
+        '200':
+          description: Account successfully created
+          schema:
+            $ref: '#/definitions/AccountCreateResponse'
+      parameters:
+        - name: AccountCreateRequest
+          in: body
+          description: Describes the account that should be created
+          required: true
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+              - userId
+            properties:
+              userId:
+                type: string
+                example: 63fgl34s
+                description: the id of the user that will own the account
+              routerPairingCode:
+                type: string
+                description: >-
+                  the pairing code (or MAC address, for legacy routers) of the
+                  router that should be paired to the account. If omitted or
+                  null, a preactivation (account with no hardware) is created.
+                example: '123123123123123'
+              parentOrganizationId:
+                type: string
+                example: ase4f32
+                description: >-
+                  the id of the organization that should get credit for
+                  activating the account. Must be an authenticated as a Pro user
+                  to use this param
+  '/accounts/{accountId}/cancel':
+    post:
+      security:
+        - userApiKeyAuth: []
+      tags:
+        - account
+      summary: Cancels an account
+      description: >-
+        Cancels an account. If any of the account's subscriptions are in a
+        commitment period this will fail. End users can cancel their own
+        accounts. Pros can cancel accounts that their organization owns
+      produces:
+        - application/json
+      parameters:
+        - name: accountId
+          in: path
+          description: id of the account to cancel
+          required: true
+          type: string
+      responses:
+        '204':
+          description: Successfully canceled account
+  '/accounts/{accountId}/reactivate':
+    post:
+      security:
+        - userApiKeyAuth: []
+      tags:
+        - account
+      summary: (Re)activates an account
+      description: >-
+        (Re)activates an account. End users can reactivate their own accounts.
+        Pros can reactivate accounts that their organization 'owns'.
+      produces:
+        - application/json
+      parameters:
+        - name: accountId
+          in: path
+          description: id of the account to (re)activate
+          required: true
+          type: string
+      responses:
+        '204':
+          description: Successfully activated account
+  '/accounts/{accountId}':
+    get:
+      security:
+        - userApiKeyAuth: []
+      tags:
+        - account
+      summary: Get account details by id
+      description: >-
+        Get account details by id. End users can learn about their own accounts.
+        Pro users an learn about accounts that they have rights to manage
+      produces:
+        - application/json
+      parameters:
+        - name: accountId
+          in: path
+          description: id of the account to retrieve
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Retrieved account details
+          schema:
+            $ref: '#/definitions/AccountsListResponse'
+    post:
+      security:
+        - userApiKeyAuth: []
+      tags:
+        - account
+      summary: Update an account
+      description: >-
+        Updates an account. End users can update their own accounts. Pros can
+        update accounts their organization owns
+      consumes:
+        - application/json
+      parameters:
+        - name: accountId
+          in: path
+          description: id of the account to retrieve
+          required: true
+          type: string
+        - name: AccountUpdateRequest
+          in: body
+          description: Parameters for updating an account
+          required: true
+          schema:
+            type: object
+            additionalProperties: false
+            properties:
+              routerPairingCode:
+                type: string
+                example: '123123123123125'
+                description: >-
+                  the pairing code (or MAC for legacy routers) of the router
+                  that you want to attach to the account. The router must be
+                  available for activation. If not specified, will not be
+                  changed.
+      responses:
+        '204':
+          description: Successfully updated account
+  '/accounts/{accountId}/perftests/{perftestId}':
+    get:
+      security:
+        - userApiKeyAuth: []
+      tags:
+        - perftest
+        - account
+      summary: Retrieves details of a specific performance (bandwidth/latency) test
+      produces:
+        - application/json
+      parameters:
+        - name: accountId
+          in: path
+          description: id of the account to query for perf tests
+          required: true
+          type: string
+        - name: perftestId
+          in: path
+          description: the id of the performance test to get
+          required: true
+          type: string
+      responses:
+        '200':
+          description: 'OK, here it is'
+          schema:
+            $ref: '#/definitions/PerftestResponse'
+        '404':
+          description: No test matching these ids
+  '/accounts/{accountId}/perftests/settings':
+    get:
+      security:
+        - userApiKeyAuth: []
+      tags:
+        - perftest
+        - account
+      summary: Get performance test settings for an account
+      produces:
+        - application/json
+      parameters:
+        - name: accountId
+          in: path
+          description: id of the account to query for perf test settings
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Here are the settings
+          schema:
+            $ref: '#/definitions/AccountsPerftestSettings'
+    post:
+      security:
+        - userApiKeyAuth: []
+      tags:
+        - perftest
+        - account
+      summary: Set performance test settings for an account
+      consumes:
+        - application/json
+      parameters:
+        - name: accountId
+          in: path
+          description: id of the account to query for perf test settings
+          required: true
+          type: string
+        - name: AccountsPerftestSettingsRequest
+          in: body
+          schema:
+            $ref: '#/definitions/AccountsPerftestSettings'
+      responses:
+        '204':
+          description: OK
+  '/accounts/{accountId}/perftests':
+    get:
+      security:
+        - userApiKeyAuth: []
+      tags:
+        - perftest
+        - account
+      summary: List historical performance (bandwidth and latency) tests
+      produces:
+        - application/json
+      parameters:
+        - name: accountId
+          in: path
+          description: id of the account to query for perf tests
+          required: true
+          type: string
+        - name: filters
+          in: query
+          description: specify the type of test to query results for
+          required: false
+          type: array
+          items:
+            type: string
+            enum:
+              - upload
+              - download
+              - latency
+        - name: limit
+          in: query
+          description: maximum number of results to view
+          required: false
+          type: integer
+        - name: startKey
+          in: query
+          description: 'key to start from, used for pagination'
+          required: false
+          type: string
+      responses:
+        '200':
+          description: Here are some results
+          schema:
+            $ref: '#/definitions/AccountsPerftestListResponse'
+    post:
+      security:
+        - userApiKeyAuth: []
+      tags:
+        - perftest
+        - account
+      summary: Request a performance (bandwidth or latency) test
+      produces:
+        - application/json
+      parameters:
+        - name: accountId
+          in: path
+          description: id of the account that should have its hardware run a perf test
+          required: true
+          type: string
+        - name: AccountPerftestRequest
+          in: body
+          description: Describes the test that should be run
+          required: true
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+              - type
+            properties:
+              type:
+                $ref: '#/definitions/PerftestType'
+              duration:
+                type: integer
+                example: 15
+                description: >-
+                  Integer number of seconds that the test should run. This
+                  property is only valid (and required) for upload and download
+                  (bandwidth) tests - not latency
+      responses:
+        '201':
+          description: Perf test request created
+          schema:
+            $ref: '#/definitions/AccountsPerftestCreateResponse'
+        '409':
+          description: A test of the specified type is already queued for execution
+  '/accounts/{accountId}/promos':
+    post:
+      security:
+        - userApiKeyAuth: []
+      tags:
+        - account
+      summary: Applies a promo code to an account
+      description: >-
+        Applies a promo code to an account. Can be done by end users for their
+        accounts or by pros for accounts their organization 'owns'
+      consumes:
+        - application/json
+      parameters:
+        - name: accountId
+          in: path
+          description: id of the account to apply promo to
+          required: true
+          type: string
+        - name: AccountPromoRequest
+          in: body
+          description: Parameters for applying a promo to an account
+          required: true
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+              - promoCode
+            properties:
+              promoCode:
+                type: string
+                example: FSDK4
+                description: the promo code to apply
+      responses:
+        '204':
+          description: Successfully applied promo code account
+  '/accounts/{accountId}/subscriptions':
+    get:
+      security:
+        - userApiKeyAuth: []
+      tags:
+        - account
+        - subscription
+      summary: Gets a list of an account's subscriptions
+      description: >-
+        Gets a list of an account's subscriptions. End users can list their own
+        accounts' subscriptions. Pro users can list subscriptions for accounts
+        that their org owns.
+      produces:
+        - application/json
+      parameters:
+        - name: accountId
+          in: path
+          description: the id of the account
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Retrieved some subscriptions
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AccountSubscriptionsListResponse'
+    post:
+      security:
+        - userApiKeyAuth: []
+      tags:
+        - account
+        - subscription
+      summary: Creates a subscription
+      description: >-
+        Creates a subscription by subscribing an account to a plan. End users
+        can subscribe their own accounts. Pros can subscribe for accounts that
+        their org owns.
+      consumes:
+        - application/json
+      parameters:
+        - name: accountId
+          in: path
+          description: id of the account
+          required: true
+          type: string
+        - name: AccountSubscriptionRequest
+          in: body
+          description: Parameters for subscribing an account to a plan
+          required: true
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+              - planId
+            properties:
+              planId:
+                type: string
+                example: coolPlanId
+                description: id of the plan to subscribe the account to
+      responses:
+        '204':
+          description: Successfully subscribed
+  '/accounts/{accountId}/subscriptions/{subscriptionId}':
+    delete:
+      security:
+        - userApiKeyAuth: []
+      tags:
+        - account
+        - subscription
+      summary: Cancels a single subscription
+      description: >-
+        Cancels a single subscription. End users can cancel their own accounts'
+        subscriptions. Pro users can cancel subscriptions for accounts that
+        their org owns. Attempting to cancel a subscription that is still in a
+        commitment period will fail.
+      parameters:
+        - name: accountId
+          in: path
+          description: the id of the account
+          required: true
+          type: string
+        - name: subscriptionId
+          in: path
+          description: the id of the subscription
+          required: true
+          type: string
+      responses:
+        '204':
+          description: Subscription successfully canceled
+  '/tags/{type}/{entityIdOrTagName}':
+    post:
+      security:
+        - userApiKeyAuth: []
+      tags:
+        - tags
+      summary: Tags a taggable entity
+      description: >-
+        Tags can be applied to accounts, inventory items (routers), and
+        organizations. Only Pro users can interact with tags.
+      consumes:
+        - application/json
+      parameters:
+        - in: path
+          name: type
+          required: true
+          type: string
+          description: The type of entity to be tagged
+          enum:
+            - accounts
+            - inventory
+            - organizations
+        - in: path
+          name: entityIdOrTagName
+          required: true
+          type: string
+          description: The id of the entity to be tagged
+        - in: body
+          name: TagCreateRequest
+          required: true
+          schema:
+            type: object
+            additionalProperties: false
+            properties:
+              name:
+                type: string
+                description: the name or key of the tag
+                example: NumberOfPies
+              value:
+                type: string
+                description: the value that corresponds with the tag name or key
+                example: '7'
+            required:
+              - name
+              - value
+      responses:
+        '200':
+          description: Tag created successfully
+    get:
+      tags:
+        - tags
+      security:
+        - userApiKeyAuth: []
+      summary: Retrieves the tags from a taggable entity.
+      description: Only Pro users can interact with tags.
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: type
+          required: true
+          type: string
+          description: The type of taggable entity
+          enum:
+            - accounts
+            - inventory
+            - organizations
+        - in: path
+          name: entityIdOrTagName
+          required: true
+          type: string
+          description: The id of the taggable entity
+      responses:
+        '200':
+          description: Tags retrieved
+          schema:
+            $ref: '#/definitions/Tags'
+    delete:
+      tags:
+        - tags
+      security:
+        - userApiKeyAuth: []
+      summary: >-
+        Delete a tag, identified by name, from each taggable entity of the given
+        type.
+      description: Only Pro users can interact with tags.
+      parameters:
+        - in: path
+          name: type
+          required: true
+          type: string
+          description: The type of taggable entity
+          enum:
+            - accounts
+            - inventory
+            - organizations
+        - in: path
+          name: entityIdOrTagName
+          required: true
+          type: string
+          description: The name of the tag
+      responses:
+        '200':
+          description: Tags deleted
+  '/tags/{type}':
+    get:
+      tags:
+        - tags
+      security:
+        - userApiKeyAuth: []
+      summary: >-
+        Lists the tag names (keys) that have been created for the given entity
+        type.
+      description: Only Pro users can interact with tags.
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: type
+          required: true
+          type: string
+          description: The type of taggable entity to query for tag names (keys)
+          enum:
+            - accounts
+            - inventory
+            - organizations
+      responses:
+        '200':
+          description: Tag names returned
+          schema:
+            $ref: '#/definitions/TagNamesResponse'
+  /authenticate:
+    post:
+      tags:
+        - user
+        - auth
+      summary: Authenticates a user.
+      description: >-
+        Authenticates a user. The primary result is an API key that can be used
+        in further calls to other endpoints to perform actions on behalf of the
+        user. This API key can be used to perform any action that the user has
+        permissions to do.
+
+        The username/password parameters are mutually exclusive to the jwt
+        parameter. A caller may either authenticate with username/password or
+        jwt - not both. The remember parameter may be used in either case.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: AuthenticateRequest
+          required: true
+          schema:
+            type: object
+            additionalProperties: false
+            example:
+              email: joeuser@example.net
+              password: hunter2*
+            properties:
+              email:
+                type: string
+                format: email
+              password:
+                type: string
+                format: string
+              remember:
+                type: boolean
+                description: >-
+                  if true, the provided API key will last indefinitely.
+                  Otherwise, it will expire after one day. Alternatively, an
+                  integer number of seconds until expiration can be supplied
+              jwt:
+                type: string
+                description: >-
+                  a jwt-encoded SSO token. Must be signed with a shared secret
+                  and contain the following fields: cid: a unique, immutable
+                  identifier for the customer; iat: issued-at (UNIX) timestamp;
+                  jti: unique id for the token to prevent replay attacks; oid:
+                  unique, immutable identifier for the SSO partner
+      responses:
+        '200':
+          description: Successfully authenticated
+          schema:
+            $ref: '#/definitions/AuthenticateResponse'
+        '401':
+          description: Unauthorized - indicates that credentials are not valid
+  /authenticate/logout:
+    post:
+      security:
+        - userApiKeyAuth: []
+      tags:
+        - auth
+        - user
+      summary: >-
+        'Logs out' an API session by instantly invalidating the API key used to
+        authenticate this request
+      responses:
+        '204':
+          description: Successfully logged out
+  /authenticate/reset:
+    post:
+      tags:
+        - auth
+        - user
+      summary: Finish a password reset
+      description: >-
+        Complete a password reset request initiated with
+        /authenticate/reset/{email}
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: AuthenticateResetCompleteRequest
+          required: true
+          schema:
+            type: object
+            required:
+              - password
+              - resetToken
+            additionalProperties: false
+            properties:
+              password:
+                type: string
+                description: new password for the user
+                example: TopSecret554
+              resetToken:
+                type: string
+                description: >-
+                  The reset token that the user received via authenticated
+                  channel (e.g. email)
+                example: 4123412352362456abfb24235236543256534
+      responses:
+        '200':
+          description: Reset successful
+  '/authenticate/reset/{email}':
+    post:
+      tags:
+        - auth
+        - user
+      summary: Request a password reset
+      description: >-
+        Requests that a password reset email be sent to the provided email
+        address. The email will contain a reset token or a hyperlink with a
+        reset token. The token and the desired new password must be POSTed to
+        /authenticate/reset
+      parameters:
+        - name: email
+          in: path
+          description: email address of the user who is requesting a password reset email
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Request received - reset will be sent if email is valid
+  /organizations:
+    post:
+      tags:
+        - organization
+      summary: Creates a new organization
+      description: >-
+        Create a new organization. Organizations can be created anonymously. The
+        first user to add themselves to the organization will become the "owner"
+        and no other users will be able to add themselves without permission.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: OrganizationCreateRequest
+          in: body
+          required: true
+          description: Information about the organization to create
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+              - name
+              - address
+              - city
+              - state
+              - zip
+              - country
+            properties:
+              name:
+                type: string
+                description: The name of the company/organization
+                example: ACME
+              address:
+                type: string
+                description: the mailing address of the org
+              address2:
+                type: string
+                description: 'second part of the address, if applicable'
+              address3:
+                type: string
+                description: 'third part of the address, if applicable'
+              city:
+                type: string
+                example: Bermuda
+              state:
+                type: string
+                description: the state/province of the organization
+                example: Florida
+              zip:
+                type: string
+                description: the ZIP or post code of the organization
+                example: '12345'
+              country:
+                type: string
+                description: The country of the organization
+                example: US
+              repFirmId:
+                type: string
+                description: >-
+                  The id of a rep firm that should be associated with the
+                  organization
+              businessType:
+                type: string
+                description: The type of business the organization is engaged in
+      responses:
+        '200':
+          description: Organization created successfully
+          schema:
+            $ref: '#/definitions/OrganizationCreateResponse'
+  '/organizations/{organizationId}':
+    get:
+      security:
+        - userApiKeyAuth: []
+      tags:
+        - organization
+      summary: Retrieve information about an organization
+      description: >-
+        Retrieve information about an organization. Authentication is optional
+        for calling this endpoint. If authentication is not provided (or
+        authentication is provided for a user not privileged to learn details of
+        the organization) only bare minimum details are returned.
+      parameters:
+        - in: path
+          name: organizationId
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: organization info retrieved
+          schema:
+            $ref: '#/definitions/OrganizationResponse'
+  /user:
+    get:
+      security:
+        - userApiKeyAuth: []
+      tags:
+        - user
+      summary: Gets information about the currently-authenticated user
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: Information about the currently-authenticated user
+          schema:
+            $ref: '#/definitions/CommonUserReturn'
+  /plans:
+    get:
+      security:
+        - userApiKeyAuth: []
+      tags:
+        - plans
+        - account
+      summary: Returns a list of available plans.
+      description: >-
+        Returns a list of available plans. The parentOrganizationId and
+        owningUserId parameters should always be specified, when known.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: parentOrganizationId
+          required: false
+          type: string
+          description: >-
+            If specified, the endpoint returns only plans applicable for
+            accounts with this parentOrganizationId
+        - in: query
+          name: owningUserId
+          required: false
+          type: string
+          description: >-
+            If specified, the endpoint returns only plans applicable for
+            accounts owned by this user
+      responses:
+        '200':
+          description: List of plans retrieved
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                  example: coolPlan3
+                name:
+                  type: string
+                  example: Premium Ultra Deluxe
+                commitmentInfo:
+                  type: object
+                  required:
+                    - duration
+                    - discount
+                  additionalProperties: false
+                  properties:
+                    duration:
+                      type: integer
+                      description: number of integer months that the commitment lasts
+                      example: 12
+                    discount:
+                      type: number
+                      format: float
+                      description: >-
+                        amount of discount that is applied during commitment
+                        period. In same currency as the plan's pricing.
+                      example: 4.99
+                price:
+                  type: object
+                  properties:
+                    amount:
+                      type: number
+                      format: float
+                      description: >-
+                        the plan costs this much every intervalCount intervals
+                        in units of currency
+                      example: 19.95
+                    currency:
+                      type: string
+                      example: usd
+                      description: three-letter currency code
+                    interval:
+                      type: string
+                      enum:
+                        - day
+                        - week
+                        - month
+                        - year
+                      example: month
+                      description: billing occurs at this kind of interval.
+                    intervalCount:
+                      type: integer
+                      minimum: 1
+                      description: >-
+                        billing will occur once for every intervalCount
+                        interval(s)
+                      example: 1
+                trialPeriod:
+                  type: integer
+                  description: number of days of free trial on the plan
+                flags:
+                  type: array
+                  description: a set of flags that convey information about the plan
+                  items:
+                    type: string
+                    example: premium
+  '/users/email/{email}':
+    get:
+      tags:
+        - user
+      summary: Learn whether an email address is available for registration or not
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: email
+          description: the email address to check availability for
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Availability info has been retrieved
+          schema:
+            $ref: '#/definitions/EmailAvailabilityReturn'
+  '/users/{userId}':
+    get:
+      tags:
+        - user
+      summary: Get information about a user
+      description: >-
+        Gets information about a user. Users can get information about
+        themselves. Pro users can get information about users associated with
+        accounts 'owned' by the pro's organization.
+      security:
+        - userApiKeyAuth: []
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: userId
+          description: the id of the user to retrieve information about
+          required: true
+          type: string
+      responses:
+        '200':
+          description: User information returned
+          schema:
+            $ref: '#/definitions/CommonUserReturn'
+    post:
+      tags:
+        - user
+      summary: Updates a user
+      description: >-
+        Updates a user. Users can update themselves. Pro users can update users
+        associated with accounts 'owned' by the pro's organization, but cannot
+        change other users' passwords. Any supported property which is not
+        specified will not be updated.
+      security:
+        - userApiKeyAuth: []
+      consumes:
+        - application/json
+      parameters:
+        - in: path
+          name: userId
+          description: the id of the user to update
+          required: true
+          type: string
+        - in: body
+          name: UserUpdateRequest
+          schema:
+            type: object
+            additionalProperties: false
+            properties:
+              email:
+                type: string
+                format: email
+              firstName:
+                type: string
+                example: Billy
+              lastName:
+                type: string
+                example: User
+              phone:
+                type: string
+                example: 15558675309
+              address:
+                type: string
+                example: 123 Fake Street
+              address2:
+                type: string
+                example: Building A
+              address3:
+                type: string
+                example: Room 100
+              city:
+                type: string
+                example: Pompei
+              state:
+                type: string
+                example: NV
+              zip:
+                type: string
+                example: 12345
+              country:
+                type: string
+                example: USA
+              password:
+                type: string
+                example: TopSecretz
+      responses:
+        '204':
+          description: Updated successfully
+  /users:
+    get:
+      tags:
+        - user
+      summary: Retrieves a list of users which can be optionally filtered
+      description: >-
+        Retrieves a list of users. Callers can list their own user. Pro users
+        can list users associated with accounts managed by their organization.
+      security:
+        - userApiKeyAuth: []
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: email
+          type: string
+          format: email
+          description: >-
+            An optional email address to filter by. If provided, only a user
+            with a matching email address will be returned.
+          required: false
+      responses:
+        '200':
+          description: List of users
+          schema:
+            $ref: '#/definitions/UserListResponse'
+    post:
+      tags:
+        - user
+      summary: Creates a new user
+      description: >-
+        When creating a new end user, this endpoint can be called anonymously.
+        For attaching a new Pro user to a new organization (one that has just
+        been created and has no owner), this endpoint can be called anonymously.
+        For adding a new Pro to an existing organization that already has an
+        owner, this endpoint must be called with a valid API key with rights to
+        modify the organization.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: UserCreateRequest
+          description: Information about the user to create
+          required: true
+          schema:
+            type: object
+            required:
+              - email
+              - firstName
+              - lastName
+              - phone
+            additionalProperties: false
+            properties:
+              email:
+                type: string
+                format: email
+                description: the user's email address
+              firstName:
+                type: string
+                example: George
+              lastName:
+                type: string
+                example: McFee
+              phone:
+                type: string
+                example: '+18015555555'
+              address:
+                type: string
+                description: required if organizationId is not provided
+              address2:
+                type: string
+              address3:
+                type: string
+              city:
+                type: string
+                description: required if organizationId is not provided
+              state:
+                type: string
+                description: required if organizationId is not provided
+              zip:
+                type: string
+                description: required if organizationId is not provided
+              country:
+                type: string
+                description: required if organizationId is not provided
+              organizationId:
+                type: string
+                description: >-
+                  The organization the user should belong to (i.e. they are a
+                  'pro'). If the specified organization already has an owner
+                  (i.e. it is not brand new), a valid API key must accompany
+                  this request
+              suppressWelcomeEmail:
+                type: boolean
+                description: >-
+                  If specified and true, a welcome email will not be sent to the
+                  user at this time. This parameter should not be sent when
+                  creating Pro users.
+                default: false
+                example: false
+      responses:
+        '201':
+          description: The id of the created user
+          schema:
+            $ref: '#/definitions/UserCreateResponse'

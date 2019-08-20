@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "./util/buildApi.sh; rm -fr dist; tsc"
   },
   "repository": {
     "type": "git",
@@ -21,6 +22,8 @@
     "typescript": "^3.5.3"
   },
   "dependencies": {
-    "express": "^4.17.1"
+    "@types/request": "^2.48.2",
+    "express": "^4.17.1",
+    "request": "^2.88.0"
   }
 }

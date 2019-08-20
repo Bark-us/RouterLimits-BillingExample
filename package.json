@@ -18,12 +18,16 @@
   },
   "homepage": "https://github.com/RouterLimits/ThirdPartyBillingExample#readme",
   "devDependencies": {
+    "@types/config": "0.0.34",
     "@types/express": "^4.17.1",
+    "@types/node": "^8.10.34",
+    "@types/request": "^2.48.2",
     "typescript": "^3.5.3"
   },
   "dependencies": {
-    "@types/request": "^2.48.2",
+    "config": "^3.2.2",
     "express": "^4.17.1",
-    "request": "^2.88.0"
+    "request": "^2.88.0",
+    "stripe": "^7.8.0"
   }
 }

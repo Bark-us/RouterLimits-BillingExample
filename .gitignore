@@ -65,5 +65,6 @@ typings/
 dist/
 
 src/rlapi
+src/webhookTypes
 
 config/local.json

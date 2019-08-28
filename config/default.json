@@ -4,9 +4,9 @@
   },
 
   // Maps Router Limits plan ids to Stripe plan ids
-  "planMap" : {
-
-  },
+  "planMap" : [
+    // {rlPlanId : "fgjkh2re3", stripePlanId : "plan5"}
+  ],
 
   "routerlimits" : {
     "apiKey" : null,

@@ -20,6 +20,7 @@ export interface Configuration {
         publishableKey : string;
         secretKey : string;
         webhookSecret : string;
+        webhookValidInterval : number;
     }
 }
 

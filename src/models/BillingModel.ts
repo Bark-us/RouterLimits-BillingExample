@@ -147,7 +147,10 @@ export class StripeBillingModel implements IBillingModel {
     private findOurSubscription(id : string) : Promise<ISubscription | null> {
         return this.stripe.subscriptions.list({customer:id, limit: 100}).autoPagingToArray({limit: 1000}).then((subs) => {
             const ourSub = subs.find((s) => {
-                return s.plan && this.knownPlanIds.has(s.plan.id);
+                if (s && s.plan && this.knownPlanIds.has(s.plan.id)) {
+                    return true;
+                }
+                return false;
             });
 
             if (ourSub && ourSub) {

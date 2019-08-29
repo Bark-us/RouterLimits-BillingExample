@@ -11,7 +11,8 @@ const c : Configuration = {
     stripe: {
         publishableKey: "",
         secretKey: "",
-        webhookSecret: ""
+        webhookSecret: "",
+        webhookValidInterval: 86400 * 3
     }
 };
 

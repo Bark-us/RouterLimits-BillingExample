@@ -19,10 +19,11 @@ export interface Configuration {
     stripe : {
         publishableKey : string;
         secretKey : string;
+        webhookSecret : string;
     }
 }
 
-interface PlanMapping {
-    rlPlanId : string;
-    stripePlanId : string;
+export interface PlanMapping {
+    id : string;
+    billingId : string;
 }

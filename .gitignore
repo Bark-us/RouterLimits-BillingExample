@@ -66,4 +66,4 @@ dist/
 
 src/routerlimits/api
 
-config/local.json
+config/local*

@@ -24,7 +24,7 @@ export class ApiServer {
 
         this.expressApp.get('/', baseController.index);
         this.expressApp.post('/webhooks/routerlimits', greedyRawParser, new rlWebhookController.RouterLimitsWebhookController(config, rlProcessor).router);
-        this.expressApp.post('/webhooks/billing', billingWebhookController.router);
+        this.expressApp.post('/webhooks/billing', );
         this.server = this.expressApp.listen(config.api.listenPort);
     }
 

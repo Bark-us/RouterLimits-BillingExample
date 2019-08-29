@@ -9,12 +9,17 @@
         "outDir": "dist",
         "baseUrl": ".",
         "strictNullChecks": true,
+        "allowSyntheticDefaultImports": true,
         "paths": {
             "*": [
                 "node_modules/*",
                 "src/*"
             ]
-        }
+        },
+        "lib" : [
+            "es6",
+            "esnext.asynciterable"
+        ]
     },
     "include": [
         "src/**/*"

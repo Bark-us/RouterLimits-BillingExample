@@ -1,3 +1,6 @@
+import Stripe from 'stripe';
+import {Configuration} from "../Config";
+import ISubscription = Stripe.subscriptions.ISubscription;
 export interface IBillingModel {
 
     /**
@@ -20,7 +23,7 @@ export interface IBillingModel {
     /**
      * Subscribe a customer to the specified plan
      * @param id the customer's id
-     * @param planId the plan's id
+     * @param planId the plan's billing id
      */
     subscribe(id : string, planId : string) : Promise<void>;
 }
@@ -67,5 +70,90 @@ export class MockBillingModel implements IBillingModel {
 
         c.planId = planId;
         return Promise.resolve();
+    }
+}
+
+export class StripeBillingModel implements IBillingModel {
+    private readonly stripe : Stripe;
+    private readonly knownPlanIds : Set<string>;
+
+    constructor(config : Configuration) {
+        this.stripe = new Stripe(config.stripe.secretKey);
+
+        this.knownPlanIds = new Set<string>();
+        config.planMap.forEach((mapping) => {
+            this.knownPlanIds.add(mapping.billingId);
+        })
+    }
+
+    cancel(id: string): Promise<void> {
+        return this.findOurSubscription(id).then((sub) => {
+            // No action needed if we aren't subscribed
+            if (!sub || !sub.plan) {
+                return Promise.resolve();
+            }
+
+            // Otherwise, cancel the sub
+            return this.stripe.subscriptions.del(sub.id).then(() => {
+                return Promise.resolve();
+            });
+        })
+    }
+
+    createCustomer(): Promise<string> {
+        return this.stripe.customers.create({}).then((customer) => {
+            return Promise.resolve(customer.id);
+        })
+    }
+
+    get(id: string): Promise<string | null> {
+        return this.findOurSubscription(id).then((sub) => {
+            if (sub && sub.plan) {
+                return Promise.resolve(sub.plan.id);
+            }
+            return Promise.resolve(null);
+        })
+    }
+
+    subscribe(id: string, planId: string): Promise<void> {
+        return this.findOurSubscription(id).then((sub) => {
+            // If we don't have one, create one
+            if (!sub || !sub.plan) {
+                return this.stripe.subscriptions.create({customer: id, plan : planId}).then(() => {
+                    return Promise.resolve();
+                })
+            }
+
+            // If we do have an existing subscription:
+            // No action needed if sub is already on desired plan
+            if (sub.plan.id === planId) {
+                return Promise.resolve();
+            }
+
+            // action needed if sub is not on desired plan
+            return this.stripe.subscriptions.update(sub.id, {plan:planId}).then(() => {
+                return Promise.resolve();
+            });
+        })
+    }
+
+    // For testing - returns created plan id
+    createPlan() : Promise<string> {
+        return this.stripe.plans.create({amount: 0, currency: 'usd', interval: 'month', product: {name: 'StripeBillingModel Test Plan'}}).then((plan) => {
+            return Promise.resolve(plan.id);
+        })
+    }
+
+    private findOurSubscription(id : string) : Promise<ISubscription | null> {
+        return this.stripe.subscriptions.list({customer:id, limit: 100}).autoPagingToArray({limit: 1000}).then((subs) => {
+            const ourSub = subs.find((s) => {
+                return s.plan && this.knownPlanIds.has(s.plan.id);
+            });
+
+            if (ourSub && ourSub) {
+                return Promise.resolve(ourSub);
+            }
+            return Promise.resolve(null);
+        })
     }
 }

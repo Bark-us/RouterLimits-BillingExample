@@ -3,7 +3,7 @@ import {assert} from "chai";
 import {RouterLimitsController} from "../controllers/RouterLimitsController";
 import {MockBillingModel} from "../models/BillingModel";
 import {MockAccountsModel} from "../models/AccountsModel";
-import {PlansModel, Plan} from "../models/PlansModel";
+import {PlansModel} from "../models/PlansModel";
 
 describe("RouterLimitsController", () => {
     describe("Unit tests", () => {
@@ -75,7 +75,35 @@ describe("RouterLimitsController", () => {
                     return Promise.resolve();
                 })
             })
-        })
+        });
+
+        describe("handleAccountSubscriptionCancel", () => {
+            it("Fails if account does not exist", () => {
+                return rlc.handleAccountSubscriptionCancel(makeTimestamp(), accountId).then(() => {
+                    return Promise.reject(new Error("Expected failure"));
+                }).catch((err) => {
+                    return Promise.resolve();
+                })
+            });
+
+            it("Works", () => {
+                let billingId : string;
+                return billing.createCustomer().then((billingCustomerId) => {
+                    billingId = billingCustomerId;
+                    return accounts.create(accountId, billingCustomerId);
+                }).then(() => {
+                    return billing.subscribe(billingId, billingPlanId);
+                }).then(() => {
+                    return rlc.handleAccountSubscriptionCancel(makeTimestamp(), accountId);
+                }).then(() => {
+                    return billing.get(billingId);
+                }).then((subscribedBillingPlanId) => {
+                    if (subscribedBillingPlanId !== null)
+                        return Promise.reject(new Error("Should be unsubscribed"));
+                    return Promise.resolve();
+                })
+            })
+        });
     });
 });
 

@@ -11,6 +11,8 @@ import {
 } from "../routerlimits/webhooks";
 import {Configuration} from "../Config";
 import {IRouterLimitsController} from "../controllers/RouterLimitsController";
+import {BillingWebhookController, IBillingWebhookController} from "../controllers/BillingWebhookController";
+import {IAccountsModel, MockAccountsModel} from "../models/AccountsModel";
 
 const generateTestWebhookObj = () => {
     return {
@@ -54,6 +56,8 @@ describe("Router Limits Webhooks", () => {
     describe("Functional tests", () => {
         let api : ApiServer;
         let processor : MockRouterLimitsWebhookProcessor;
+        let billing : IBillingWebhookController;
+        let accounts : IAccountsModel;
 
         const config : Configuration = {
             api: {listenPort: 0},
@@ -64,7 +68,9 @@ describe("Router Limits Webhooks", () => {
 
         beforeEach(() => {
             processor = new MockRouterLimitsWebhookProcessor();
-            api = new ApiServer(config, processor);
+            accounts = new MockAccountsModel();
+            billing = new BillingWebhookController(config, accounts);
+            api = new ApiServer(config, processor, billing);
         });
 
         afterEach(() => {

@@ -10,7 +10,7 @@ import {
     Webhook
 } from "../routerlimits/webhooks";
 import {Configuration} from "../Config";
-import {IRouterLimitsController} from "../controllers/RouterLimitsController";
+import {IRouterLimitsWebhookController} from "../controllers/RouterLimitsWebhookController";
 import {BillingWebhookController, IBillingWebhookController} from "../controllers/BillingWebhookController";
 import {IAccountsModel, MockAccountsModel} from "../models/AccountsModel";
 
@@ -31,7 +31,7 @@ const generateTestWebhookObj = () => {
     };
 };
 
-class MockRouterLimitsWebhookProcessor implements IRouterLimitsController {
+class MockRouterLimitsWebhookProcessor implements IRouterLimitsWebhookController {
     numProcessed : number;
 
     constructor() {

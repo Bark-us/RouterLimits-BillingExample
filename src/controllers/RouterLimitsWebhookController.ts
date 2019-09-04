@@ -5,13 +5,13 @@ import {IPlansModel} from "../models/PlansModel";
 /**
  * Represents a class which has the "business logic" of handling the Router Limits webhooks
  */
-export interface IRouterLimitsController {
+export interface IRouterLimitsWebhookController {
     handleAccountCreated(timestamp: number, accountId: string, firstName: string, lastName: string, email: string) : Promise<void>;
     handleAccountSubscriptionChange(timestamp : number, accountId : string, planId : string) : Promise<void>;
     handleAccountSubscriptionCancel(timestamp : number, accountId : string) : Promise<void>;
 }
 
-export class RouterLimitsController implements IRouterLimitsController {
+export class RouterLimitsWebhookController implements IRouterLimitsWebhookController {
     private readonly billing : IBillingModel;
     private readonly accounts : IAccountsModel;
     private readonly plans : IPlansModel;

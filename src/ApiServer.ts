@@ -2,10 +2,10 @@ import bodyParser from "body-parser";
 import express from "express";
 import http from "http";
 
-import * as rlWebhookController from "./controllers/http/routerlimitswebhooks";
-import * as billingWebhookController from "./controllers/http/billingwebhooks";
+import {RouterLimitsWebhookReceiver} from "./http/RouterLimitsWebhookReceiver";
+import {StripeWebhookReceiver} from "./http/StripeWebhookReceiver";
 import {Configuration} from "Config";
-import {IRouterLimitsController} from "./controllers/RouterLimitsController";
+import {IRouterLimitsWebhookController} from "./controllers/RouterLimitsWebhookController";
 import {IBillingWebhookController} from "./controllers/BillingWebhookController";
 
 export class ApiServer {
@@ -16,13 +16,13 @@ export class ApiServer {
     private readonly expressApp : express.Express;
     private readonly server : http.Server;
 
-    constructor(config : Configuration, rlProcessor : IRouterLimitsController, billingProcessor : IBillingWebhookController) {
+    constructor(config : Configuration, rlProcessor : IRouterLimitsWebhookController, billingProcessor : IBillingWebhookController) {
         this.expressApp = express();
 
         const greedyRawParser = bodyParser.raw({inflate: true, type: '*/*'});
-        
-        this.expressApp.post('/webhooks/routerlimits', greedyRawParser, new rlWebhookController.RouterLimitsWebhookController(config, rlProcessor).router);
-        this.expressApp.post('/webhooks/billing', greedyRawParser, new billingWebhookController.StripeWebhookController(config, billingProcessor).router);
+
+        this.expressApp.post('/webhooks/routerlimits', greedyRawParser, new RouterLimitsWebhookReceiver(config, rlProcessor).router);
+        this.expressApp.post('/webhooks/billing', greedyRawParser, new StripeWebhookReceiver(config, billingProcessor).router);
         this.server = this.expressApp.listen(config.api.listenPort);
     }
 

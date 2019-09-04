@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
-import {Configuration} from "../../Config";
+import {Configuration} from "../Config";
 import Stripe from 'stripe';
 import ISubscription = Stripe.subscriptions.ISubscription;
-import {IBillingWebhookController} from "../BillingWebhookController";
-import {ExpireSet} from "../../ExpireSet";
+import {IBillingWebhookController} from "../controllers/BillingWebhookController";
+import {ExpireSet} from "../ExpireSet";
 import IEvent = Stripe.events.IEvent;
 
-export class StripeWebhookController {
+export class StripeWebhookReceiver {
     public readonly router = (req: Request, res: Response) => {
         // Validate webhook signature
         const sig = req.header("stripe-signature");

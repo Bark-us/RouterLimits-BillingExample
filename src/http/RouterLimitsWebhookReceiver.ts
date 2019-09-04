@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import {ExpireSet} from "../../ExpireSet";
+import {ExpireSet} from "../ExpireSet";
 import {Request, Response} from "express";
 import {
     RLAccountCanceledWebhookData,
@@ -7,13 +7,13 @@ import {
     RLAccountSubscribedWebhookData,
     Webhook,
     WebhookType
-} from "../../routerlimits/webhooks";
-import {Configuration} from "../../Config";
-import {IRouterLimitsController} from "../RouterLimitsController";
+} from "../routerlimits/webhooks";
+import {Configuration} from "../Config";
+import {IRouterLimitsWebhookController} from "../controllers/RouterLimitsWebhookController";
 
 const signatureHeaderName = "x-rl-signatures";
 
-export class RouterLimitsWebhookController {
+export class RouterLimitsWebhookReceiver {
     public readonly router = (req: Request, res: Response) : void => {
         // Validate webhook signature
         const sigHeader = req.header(signatureHeaderName);
@@ -102,10 +102,10 @@ export class RouterLimitsWebhookController {
     };
 
     private readonly config : Configuration;
-    private readonly processor : IRouterLimitsController;
+    private readonly processor : IRouterLimitsWebhookController;
     private readonly usedIds : ExpireSet<string>;
 
-    constructor(config : Configuration, processor : IRouterLimitsController) {
+    constructor(config : Configuration, processor : IRouterLimitsWebhookController) {
         this.config = config;
         this.processor = processor;
         this.usedIds = new ExpireSet<string>(config.routerlimits.webhookValidInterval);

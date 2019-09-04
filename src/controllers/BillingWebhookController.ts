@@ -2,6 +2,9 @@ import {AccountApi, AccountApiApiKeys} from "../routerlimits/api/api/accountApi"
 import {Configuration} from "../Config";
 import {IAccountsModel} from "../models/AccountsModel";
 
+/**
+ * Represents a class that implements the business logic for handling webhooks from a billing system
+ */
 export interface IBillingWebhookController {
     handleAccountSubscriptionCancel(timestamp : number, billingAccountId : string) : Promise<void>;
 }

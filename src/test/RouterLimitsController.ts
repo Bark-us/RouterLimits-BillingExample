@@ -1,11 +1,11 @@
 import 'mocha';
 import {assert} from "chai";
-import {RouterLimitsController} from "../controllers/RouterLimitsController";
+import {RouterLimitsWebhookController} from "../controllers/RouterLimitsWebhookController";
 import {MockBillingModel} from "../models/BillingModel";
 import {MockAccountsModel} from "../models/AccountsModel";
 import {PlansModel} from "../models/PlansModel";
 
-describe("RouterLimitsController", () => {
+describe("RouterLimitsWebhookController", () => {
     describe("Unit tests", () => {
         const planId = "rlp1";
         const billingPlanId = "bp1";
@@ -19,14 +19,14 @@ describe("RouterLimitsController", () => {
         let billing : MockBillingModel;
         let accounts : MockAccountsModel;
         let plans : PlansModel;
-        let rlc : RouterLimitsController;
+        let rlc : RouterLimitsWebhookController;
 
         beforeEach(() => {
             billing = new MockBillingModel();
             accounts = new MockAccountsModel();
             plans = new PlansModel(fakePlans);
 
-            rlc = new RouterLimitsController(billing, accounts, plans);
+            rlc = new RouterLimitsWebhookController(billing, accounts, plans);
         });
 
         describe("handleAccountCreated", () => {

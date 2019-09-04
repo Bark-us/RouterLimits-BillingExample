@@ -6,15 +6,21 @@ The deserialization could probably be improved.
 
 export class RLAccountCreatedWebhookData {
     readonly accountId: string;
+    readonly firstName: string;
+    readonly lastName: string;
+    readonly email: string;
 
     static fromObj(obj : any) : RLAccountCreatedWebhookData {
-        if (typeof obj["id"] === "string")
-            return new RLAccountCreatedWebhookData(obj["id"]);
+        if (typeof obj["id"] === "string" && typeof obj["user"] === "object" && obj.user.firstName && obj.user.lastName && obj.user.email)
+            return new RLAccountCreatedWebhookData(obj["id"], obj.user.firstName, obj.user.lastName, obj.user.email);
         throw new Error("Invalid object");
     }
 
-    constructor(accountId : string) {
+    constructor(accountId : string, firstName : string, lastName : string, email : string) {
         this.accountId = accountId;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
     }
 }
 

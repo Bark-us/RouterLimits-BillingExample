@@ -1,4 +1,4 @@
-import {AccountApi} from "../routerlimits/api/api/accountApi";
+import {AccountApi, AccountApiApiKeys} from "../routerlimits/api/api/accountApi";
 import {Configuration} from "../Config";
 import {IAccountsModel} from "../models/AccountsModel";
 
@@ -24,6 +24,10 @@ export class BillingWebhookController implements IBillingWebhookController {
 
             // Call Router Limits API, make sure account is canceled
             const api = new AccountApi();
+            api.setApiKey(AccountApiApiKeys.userApiKeyAuth, this.config.routerlimits.apiKey);
+            if (this.config.routerlimits.apiBase) {
+                api.basePath = this.config.routerlimits.apiBase;
+            }
 
             return api.accountsAccountIdSubscriptionsGet(accountInfo.id).then((res) => {
                 if (!res || !res.response || res.response.statusCode !== 200) {

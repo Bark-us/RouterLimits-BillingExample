@@ -87,7 +87,7 @@ export class SQLiteAccountsModel implements IAccountsModel {
 
     private static initSchema(db : sqlite3.Database) : Promise<void> {
         const queries = [
-            `CREATE TABLE \`accounts\` (
+            `CREATE TABLE IF NOT EXISTS \`accounts\` (
                 \`id\`INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 \`rlId\`TEXT NOT NULL UNIQUE,
                 \`billingId\`TEXT NOT NULL UNIQUE

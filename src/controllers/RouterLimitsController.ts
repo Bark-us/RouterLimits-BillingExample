@@ -6,7 +6,7 @@ import {IPlansModel} from "../models/PlansModel";
  * Represents a class which has the "business logic" of handling the Router Limits webhooks
  */
 export interface IRouterLimitsController {
-    handleAccountCreated(timestamp : number, accountId : string) : Promise<void>;
+    handleAccountCreated(timestamp: number, accountId: string, firstName: string, lastName: string, email: string) : Promise<void>;
     handleAccountSubscriptionChange(timestamp : number, accountId : string, planId : string) : Promise<void>;
     handleAccountSubscriptionCancel(timestamp : number, accountId : string) : Promise<void>;
 }
@@ -22,7 +22,7 @@ export class RouterLimitsController implements IRouterLimitsController {
         this.plans = plans;
     }
 
-    handleAccountCreated(timestamp: number, accountId: string): Promise<void> {
+    handleAccountCreated(timestamp: number, accountId: string, firstName: string, lastName: string, email: string): Promise<void> {
         // Check to see if we have an account with that Router Limits id already
         return this.accounts.get(accountId)
             .then((account) => {
@@ -33,7 +33,7 @@ export class RouterLimitsController implements IRouterLimitsController {
                 }
 
                 // Create customer in billing system
-                return this.billing.createCustomer()
+                return this.billing.createCustomer(firstName, lastName, email)
                     .then((billingId) => {
                         // Create mapping between billing system customer and Router Limits account
                         return this.accounts.create(accountId, billingId);

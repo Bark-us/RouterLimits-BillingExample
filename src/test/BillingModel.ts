@@ -33,7 +33,7 @@ describe("StripeBillingModel", () => {
     it("Works", () => {
         const b = new StripeBillingModel(c);
         let customerId : string;
-        return b.createCustomer().then((cid) => {
+        return b.createCustomer("Test", "Customer", "test@example.org").then((cid) => {
             customerId = cid;
             return b.subscribe(customerId, testPlanId)
         }).then(() => {

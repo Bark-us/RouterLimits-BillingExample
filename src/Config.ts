@@ -9,6 +9,8 @@ export interface Configuration {
     planMap : Array<PlanMapping>;
 
     routerlimits : {
+        apiBase? : string;
+
         apiKey : string;
 
         sharedSecret : string;

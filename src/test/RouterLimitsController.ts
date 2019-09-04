@@ -12,6 +12,9 @@ describe("RouterLimitsController", () => {
         const fakePlans = [{id : planId, billingId: billingPlanId}];
 
         const accountId = "czxslkmdsac";
+        const testFirstName = "Test";
+        const testLastname = "Customer";
+        const testEmail = "test@example.org";
 
         let billing : MockBillingModel;
         let accounts : MockAccountsModel;
@@ -29,10 +32,10 @@ describe("RouterLimitsController", () => {
         describe("handleAccountCreated", () => {
 
             it("Works and handles duplicates correctly", () => {
-                return rlc.handleAccountCreated(makeTimestamp(), accountId).then(() => {
+                return rlc.handleAccountCreated(makeTimestamp(), accountId, testFirstName, testLastname, testEmail).then(() => {
                     assert.equal(accounts.accounts.size, 1);
                     assert(accounts.accounts.has(accountId));
-                    return rlc.handleAccountCreated(makeTimestamp(), accountId);
+                    return rlc.handleAccountCreated(makeTimestamp(), accountId, testFirstName, testLastname, testEmail);
                 }).then(() => {
                     assert.equal(accounts.accounts.size, 1);
                     assert(accounts.accounts.has(accountId));
@@ -62,7 +65,7 @@ describe("RouterLimitsController", () => {
 
             it("Works", () => {
                 let billingId : string;
-                return billing.createCustomer().then((billingCustomerId) => {
+                return billing.createCustomer(testFirstName, testLastname, testEmail).then((billingCustomerId) => {
                     billingId = billingCustomerId;
                     return accounts.create(accountId, billingCustomerId);
                 }).then(() => {
@@ -88,7 +91,7 @@ describe("RouterLimitsController", () => {
 
             it("Works", () => {
                 let billingId : string;
-                return billing.createCustomer().then((billingCustomerId) => {
+                return billing.createCustomer(testFirstName, testLastname, testEmail).then((billingCustomerId) => {
                     billingId = billingCustomerId;
                     return accounts.create(accountId, billingCustomerId);
                 }).then(() => {

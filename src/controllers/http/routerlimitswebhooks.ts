@@ -71,8 +71,11 @@ export class RouterLimitsWebhookController {
 
         switch(webhook.eventType) {
             case WebhookType.ACCOUNT_CREATED:
-                this.processor.handleAccountCreated(webhook.eventTimestamp, (webhook.data as RLAccountCreatedWebhookData).accountId)
+            {
+                const data = webhook.data as RLAccountCreatedWebhookData;
+                this.processor.handleAccountCreated(webhook.eventTimestamp, data.accountId, data.firstName, data.lastName, data.email)
                     .then(handleSuccess, handleFailure);
+            }
                 break;
 
             case WebhookType.ACCOUNT_SUBSCRIBED:

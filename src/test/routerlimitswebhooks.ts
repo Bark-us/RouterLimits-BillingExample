@@ -219,7 +219,7 @@ describe("Router Limits Webhooks", () => {
         describe("Webhook Data Deserialization", () => {
             describe("Account Created", () => {
                 it("Good Data", () => {
-                    const obj = {id : "Sweet Nuggets"};
+                    const obj = {id : "Sweet Nuggets", user: {firstName : "Test", lastName: "Customer", email: "example@example.org"}};
                     RLAccountCreatedWebhookData.fromObj(obj);
                 });
 

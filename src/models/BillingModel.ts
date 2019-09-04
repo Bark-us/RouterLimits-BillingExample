@@ -12,7 +12,7 @@ export interface IBillingModel {
     /**
      * Create a customer in the billing system. Return the id
      */
-    createCustomer() : Promise<string>;
+    createCustomer(firstName: string, lastName: string, email: string) : Promise<string>;
 
     /**
      * Retrieve the billing plan id that a customer is subscribed to
@@ -47,7 +47,7 @@ export class MockBillingModel implements IBillingModel {
         return Promise.resolve();
     }
 
-    createCustomer(): Promise<string> {
+    createCustomer(firstName: string, lastName: string, email: string): Promise<string> {
         const id : string = `${this.nextId++}`;
         this.customers.set(id, {planId : null});
         return Promise.resolve(id);
@@ -100,8 +100,8 @@ export class StripeBillingModel implements IBillingModel {
         })
     }
 
-    createCustomer(): Promise<string> {
-        return this.stripe.customers.create({}).then((customer) => {
+    createCustomer(firstName: string, lastName: string, email: string): Promise<string> {
+        return this.stripe.customers.create({name : `${firstName} ${lastName}`, email: email}).then((customer) => {
             return Promise.resolve(customer.id);
         })
     }

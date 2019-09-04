@@ -1,0 +1,340 @@
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "ThirdPartyBillingExample API"
+schemes:
+  - "https"
+tags:
+  - name: Payment Methods
+    description: Endpoints for managing an account's payment methods
+definitions:
+  Account:
+    type: object
+    required:
+      - id
+      - active
+    properties:
+      id:
+        type: string
+        description: unique id of the account
+        example: vcxbjhka
+      active:
+        type: boolean
+        description: true if the account is active, false otherwise
+      plan:
+        $ref: '#/definitions/Plan'
+  AccountCreateRequest:
+    type: object
+    required:
+      - userId
+    properties:
+      userId:
+        type: string
+        example: etrlkfv
+        description: Router Limits userId that should own the account
+      routerPairingCode:
+        type: string
+        example: 123456123456123
+        description: the pairing code (or MAC address, for legacy routers) of the router that should be paired to the account. If omitted or null, an account with no hardware is created.
+  AccountCreateResponse:
+    type: object
+    required:
+      - account
+      - apiKey
+    properties:
+      account:
+        $ref: '#/definitions/Account'
+      apiKey:
+        type: string
+        description: API key that can be used to manage the newly-created account
+        example: e6999be8eee5ef9a4ae81e749094d6c04c15a3fe2345967e14589abb
+  AccountUpdateRequest:
+    type: object
+    properties:
+      active:
+        type: boolean
+        description: If set to false, account will be canceled. If set to true, account will be activated.
+      planId:
+        type: string
+        example: fdoipgf
+        description: If set, account will be subscribed to the plan with this id
+  PaginatedResponse:
+    type: object
+    required:
+      - hasMore
+    properties:
+      hasMore:
+        type: boolean
+      lastEvaluatedKey:
+        type: string
+        description: Cursor for pagination. An opaque id
+        example: f9823jdjaz
+  PaymentMethod:
+    type: object
+    required:
+      - id
+      - isDefault
+      - cardInfo
+    properties:
+      id:
+        type: string
+        description: if of the payment method
+        example: card_34oi3j4fjm
+      isDefault:
+        type: boolean
+        description: 'true if this is the account''s default payment method, false otherwise'
+      cardInfo:
+        type: object
+        description: 'if the payment method is a credit card, this object will be populated'
+        additionalProperties: false
+        required:
+          - brand
+          - expMonth
+          - expYear
+          - last4
+        properties:
+          brand:
+            type: string
+            example: Visa
+            description: the brand of the card
+          expMonth:
+            type: integer
+            format: int32
+            example: 3
+            description: The expiration month of the card
+          expYear:
+            type: integer
+            format: int32
+            example: 2025
+            description: The expiration year of the card
+          last4:
+            type: string
+            example: '2342'
+            description: the lats four digits of the card number
+  PaymentMethodCreateRequest:
+    type: object
+    required:
+      - token
+    properties:
+      token:
+        type: string
+        description: >-
+          some token from the payment processor (e.g. stripe) that
+          identifies a payment method
+        example: tok_asdfadf2
+      setDefault:
+        type: boolean
+        description: >-
+          if true, the new method will be set as the default. If false
+          or omitted, the new method won't be set as the default unless
+          there are no other payment methods.
+  PaymentMethodListResponse:
+    allOf:
+      - $ref: '#/definitions/PaginatedResponse'
+      - properties:
+          data:
+            type: array
+            items:
+              $ref: '#/definitions/PaymentMethod'
+
+  Plan:
+    type: object
+    required:
+      - id
+      - name
+    properties:
+      id:
+        type: string
+        example: ojkefk
+        description: unique id of the plan
+      name:
+        type: string
+        example: Deluxe Plan
+        description: friendly name for the plan
+  PlanListResponse:
+    allOf:
+      - $ref: '#/definitions/PaginatedResponse'
+      - properties:
+          data:
+            type: array
+            items:
+              $ref: '#/definitions/Plan'
+
+
+
+paths:
+  /authenticate:
+    post:
+      description: Takes in a JWT, validates it, and returns an API key
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              jwt:
+                type: string
+                description: base64-encoded JWT
+                example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ik91dHJhZ2VvdXMgRm9ydHVuZSIsImlhdCI6MTUxNjIzOTAyMn0.Kh_kb9JLyPCpOZXIft0IKXktf5RFf77225qoEVH4Kjw
+            required:
+              - jwt
+      responses:
+        200:
+          description: Nice credentials. Here's an API key
+          schema:
+            type: object
+            properties:
+              apiKey:
+                type: string
+                example: e6999be8eee5ef9a4ae81e749094d6c04c15a3fe2345967e14589abb
+                description: API key that can be used to manage the account's billing
+              accountId:
+                type: string
+                description: the Router Limits account id associated with the API key
+            required:
+              - apiKey
+              - accountId
+
+  /accounts:
+    post:
+      tags:
+        - Account
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/AccountCreateRequest'
+      responses:
+        201:
+          description: Nice job, you created an account
+          schema:
+            $ref: '#/definitions/AccountCreateResponse'
+
+  /accounts/{accountId}:
+    get:
+      tags:
+        - Account
+      parameters:
+        - in: path
+          name: accountId
+          required: true
+          type: string
+      responses:
+        200:
+          description: Check out this account
+          schema:
+            $ref: '#/definitions/Account'
+    post:
+      tags:
+        - Account
+      parameters:
+        - in: path
+          name: accountId
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/AccountUpdateRequest'
+      responses:
+        204:
+          description: Wow. You sure updated that account
+
+  /accounts/{accountId}/paymentMethods:
+    get:
+      tags:
+        - Payment Methods
+      parameters:
+        - in: path
+          name: accountId
+          required: true
+          type: string
+          description: Router Limits account id to retrieve payment methods for
+        - in: query
+          name: startKey
+          required: false
+          type: string
+          description: cursor for pagination
+      responses:
+        200:
+          description: Check out these payment methods
+          schema:
+            $ref: '#/definitions/PaymentMethodListResponse'
+    post:
+      tags:
+        - Payment Methods
+      parameters:
+        - in: path
+          name: accountId
+          required: true
+          type: string
+          description: Router Limits account id to create a payment methods for
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/PaymentMethodCreateRequest'
+      responses:
+        201:
+          description: Thanks for that payment method. Here it is.
+          schema:
+            $ref: '#/definitions/PaymentMethod'
+  /accounts/{accountId}/paymentMethods/{methodId}:
+    delete:
+      tags:
+        - Payment Methods
+      parameters:
+        - in: path
+          name: accountId
+          required: true
+          type: string
+          description: Router Limits account id to delete a payment method for
+        - in: path
+          name: methodId
+          required: true
+          type: string
+          description: id of the payment method to delete
+      responses:
+        204:
+          description: Thanks, we deleted it
+
+  /accounts/{accountId}/paymentMethods/{methodId}/setDefault:
+    post:
+      tags:
+        - Payment Methods
+      summary: Sets a certain payment method as default
+      description: >-
+        Sets a certain payment method on an account as the account's default.
+      parameters:
+        - name: accountId
+          in: path
+          description: the id of the account
+          required: true
+          type: string
+        - name: methodId
+          in: path
+          description: the id of the payment method
+          required: true
+          type: string
+      responses:
+        204:
+          description: Successfully set default
+
+  /plans:
+    get:
+      tags:
+        - Plans
+      parameters:
+        - in: query
+          name: startKey
+          type: string
+          required: false
+          description: cursor for pagination
+      responses:
+        200:
+          description: These plans are available
+          schema:
+            $ref: '#/definitions/PlanListResponse'

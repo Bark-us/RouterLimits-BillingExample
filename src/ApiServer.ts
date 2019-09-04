@@ -21,7 +21,6 @@ export class ApiServer {
         this.expressApp = express();
 
         const greedyRawParser = bodyParser.raw({inflate: true, type: '*/*'});
-        const jsonParser = bodyParser.json();
 
         this.expressApp.get('/', baseController.index);
         this.expressApp.post('/webhooks/routerlimits', greedyRawParser, new rlWebhookController.RouterLimitsWebhookController(config, rlProcessor).router);

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha -r ts-node/register src/test/**/*.ts",
-    "build": "./util/buildApi.sh; rm -fr dist; tsc"
+    "build": "./util/buildApi.sh; rm -fr dist; ./node_modules/typescript/bin/tsc"
   },
   "repository": {
     "type": "git",

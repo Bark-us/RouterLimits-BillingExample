@@ -14,18 +14,20 @@ import {IRouterLimitsController} from "../RouterLimitsController";
 const signatureHeaderName = "x-rl-signatures";
 
 export class RouterLimitsWebhookController {
-    public readonly router = (req: Request, res: Response) => {
+    public readonly router = (req: Request, res: Response) : void => {
         // Validate webhook signature
         const sigHeader = req.header(signatureHeaderName);
         if (!sigHeader) {
-            return res.status(400).send("Missing signature");
+            res.status(400).send("Missing signature");
+            return;
         }
 
         const signatures = sigHeader.split(",");
         const expectedSignature = crypto.createHmac("sha256", this.config.routerlimits.sharedSecret).update(req.body).digest().toString('hex');
         const validSig = signatures.some((sig) => {return sig === expectedSignature});
         if (!validSig) {
-            return res.status(400).send("Invalid signature");
+            res.status(400).send("Invalid signature");
+            return;
         }
 
         // Parse JSON (we take in a raw buffer instead of allowing Express to parse the json because we need to do the
@@ -35,7 +37,8 @@ export class RouterLimitsWebhookController {
             parsedBody = JSON.parse(req.body);
         }
         catch (e) {
-            return res.status(400).send("Invalid JSON");
+            res.status(400).send("Invalid JSON");
+            return;
         }
 
         // Validate webhook format
@@ -44,19 +47,22 @@ export class RouterLimitsWebhookController {
             webhook = Webhook.fromObj(parsedBody);
         }
         catch(e) {
-            return res.status(400).send("Invalid webhook format");
+            res.status(400).send("Invalid webhook format");
+            return;
         }
 
         // Ensure webhook attemptTimestamp is within valid period
         const now = +new Date() / 1000 | 0;
         const timeDifference = Math.abs(now - webhook.attemptTimestamp);
         if (timeDifference > this.config.routerlimits.webhookValidInterval) {
-            return res.status(400).send("Invalid attemptTimestamp");
+            res.status(400).send("Invalid attemptTimestamp");
+            return;
         }
 
         // Ensure webhook id has not been used within the valid period. If it has, we're good - no action needed
         if (this.usedIds.has(webhook.eventId)) {
-            return res.sendStatus(204);
+            res.sendStatus(204);
+            return;
         }
 
         const handleSuccess = () => {

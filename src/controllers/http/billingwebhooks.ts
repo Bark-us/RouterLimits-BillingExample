@@ -18,17 +18,10 @@ export class StripeWebhookController {
         let event : IEvent;
 
         try {
-            event = this.stripe.webhooks.constructEvent(req.body, sig, this.config.stripe.webhookSecret);
+            event = this.stripe.webhooks.constructEvent(req.body, sig, this.config.stripe.webhookSecret, this.config.stripe.webhookValidInterval);
         }
         catch (err) {
             return res.status(400).send("Invalid signature or event");
-        }
-
-        // Ensure webhook timestamp is within valid period
-        const now = +new Date() / 1000 | 0;
-        const timeDifference = Math.abs(now - event.created);
-        if (timeDifference > this.config.stripe.webhookValidInterval) {
-            return res.status(400).send("Invalid created timestamp");
         }
 
         // Make sure we don't process events twice
@@ -48,7 +41,6 @@ export class StripeWebhookController {
             }
 
             // Handle it
-            // TODOD is stripe's event.created the right property? We want the time when this particular webhook attempt was created, not the time of the first attempt
             return this.billing.handleAccountSubscriptionCancel(event.created, typeof obj.customer === "string" ? obj.customer : obj.customer.id).then(() => {
                 this.usedIds.insert(event.id);
                 return res.sendStatus(204);
@@ -60,7 +52,6 @@ export class StripeWebhookController {
         else {
             return res.sendStatus(204);
         }
-
     };
 
     private readonly config : Configuration;

@@ -26,6 +26,7 @@ export interface Configuration {
         secretKey : string;
         webhookSecret : string;
         webhookValidInterval : number;
+        apiVersion : string;
     }
 }
 

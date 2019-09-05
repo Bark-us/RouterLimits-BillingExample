@@ -67,7 +67,7 @@ describe("Router Limits Webhooks", () => {
             api: {listenPort: 0, apiKeyTtl: 1},
             planMap: [],
             routerlimits: {apiKey: "", sharedSecret: "secretcats", webhookValidInterval: 1, jwtValidInterval: 1},
-            stripe: {publishableKey: "",secretKey: "", webhookSecret:"", webhookValidInterval: 300}
+            stripe: {publishableKey: "",secretKey: "", webhookSecret:"", webhookValidInterval: 300, apiVersion: "2017-06-05"}
         };
 
         beforeEach(() => {

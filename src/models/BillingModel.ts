@@ -78,7 +78,7 @@ export class StripeBillingModel implements IBillingModel {
     private readonly knownPlanIds : Set<string>;
 
     constructor(config : Configuration) {
-        this.stripe = new Stripe(config.stripe.secretKey);
+        this.stripe = new Stripe(config.stripe.secretKey, config.stripe.apiVersion);
 
         this.knownPlanIds = new Set<string>();
         config.planMap.forEach((mapping) => {

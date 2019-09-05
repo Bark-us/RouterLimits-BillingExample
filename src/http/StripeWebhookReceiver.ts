@@ -61,7 +61,7 @@ export class StripeWebhookReceiver {
 
     constructor(config : Configuration, billing : IBillingWebhookController) {
         this.config = config;
-        this.stripe = new Stripe(config.stripe.secretKey);
+        this.stripe = new Stripe(config.stripe.secretKey, config.stripe.apiVersion);
         this.billing = billing;
         this.usedIds = new ExpireSet<string>(config.stripe.webhookValidInterval);
     }

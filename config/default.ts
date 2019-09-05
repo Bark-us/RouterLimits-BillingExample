@@ -40,7 +40,9 @@ const c : Configuration = {
         webhookSecret: "",
 
         // Webhooks will only be accepted within this many seconds of their attempt creation date
-        webhookValidInterval: 300
+        webhookValidInterval: 300,
+
+        apiVersion: "2017-06-05"
     }
 };
 

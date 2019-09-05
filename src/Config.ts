@@ -3,6 +3,7 @@ export interface Configuration {
 
     api : {
         listenPort : number;
+        apiKeyTtl : number;
     }
 
     // Maps Router Limits plan ids to Stripe plan ids
@@ -16,6 +17,8 @@ export interface Configuration {
         sharedSecret : string;
 
         webhookValidInterval : number;
+
+        jwtValidInterval : number;
     }
 
     stripe : {

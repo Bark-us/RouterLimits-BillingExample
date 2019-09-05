@@ -4,6 +4,7 @@ info:
   title: "ThirdPartyBillingExample API"
 schemes:
   - "https"
+basePath: /api
 tags:
   - name: Payment Methods
     description: Endpoints for managing an account's payment methods

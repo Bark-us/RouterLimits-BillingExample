@@ -3,7 +3,10 @@ import {Configuration} from "../src/Config";
 const c : Configuration = {
     api: {
         // Our API (including webhook handlers) will run on this port
-        listenPort: 8080
+        listenPort: 8080,
+
+        // Number of seconds an API key should last before expiring
+        apiKeyTtl: 3600
     },
 
     // A mapping of Router Limits plan ids to the plan ids used in Stripe (or your billing system)
@@ -19,7 +22,9 @@ const c : Configuration = {
         sharedSecret: "",
 
         // Webhooks will only be accepted within this many seconds of their attempt creation date
-        webhookValidInterval: 300
+        webhookValidInterval: 300,
+
+        jwtValidInterval: 300
     },
 
     // Settings for communicating with stripe. If you've implemented code for a different billing/payment system, this

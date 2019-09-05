@@ -13,6 +13,8 @@ import {Configuration} from "../Config";
 import {IRouterLimitsWebhookController} from "../controllers/RouterLimitsWebhookController";
 import {BillingWebhookController, IBillingWebhookController} from "../controllers/BillingWebhookController";
 import {IAccountsModel, MockAccountsModel} from "../models/AccountsModel";
+import {AuthenticationController, IAuthenticationController} from "../controllers/AuthenticationController";
+import {ApiKeysModel} from "../models/ApiKeysModel";
 
 const generateTestWebhookObj = () => {
     return {
@@ -31,7 +33,7 @@ const generateTestWebhookObj = () => {
     };
 };
 
-class MockRouterLimitsWebhookProcessor implements IRouterLimitsWebhookController {
+class MockRouterLimitsWebhookController implements IRouterLimitsWebhookController {
     numProcessed : number;
 
     constructor() {
@@ -55,22 +57,27 @@ class MockRouterLimitsWebhookProcessor implements IRouterLimitsWebhookController
 describe("Router Limits Webhooks", () => {
     describe("Functional tests", () => {
         let api : ApiServer;
-        let processor : MockRouterLimitsWebhookProcessor;
+        let processor : MockRouterLimitsWebhookController;
         let billing : IBillingWebhookController;
         let accounts : IAccountsModel;
+        let auth : IAuthenticationController;
+        let apiKeys : ApiKeysModel;
 
         const config : Configuration = {
-            api: {listenPort: 0},
+            api: {listenPort: 0, apiKeyTtl: 1},
             planMap: [],
-            routerlimits: {apiKey: "", sharedSecret: "secretcats", webhookValidInterval: 1},
+            routerlimits: {apiKey: "", sharedSecret: "secretcats", webhookValidInterval: 1, jwtValidInterval: 1},
             stripe: {publishableKey: "",secretKey: "", webhookSecret:"", webhookValidInterval: 300}
         };
 
         beforeEach(() => {
-            processor = new MockRouterLimitsWebhookProcessor();
+            processor = new MockRouterLimitsWebhookController();
             accounts = new MockAccountsModel();
             billing = new BillingWebhookController(config, accounts);
-            api = new ApiServer(config, processor, billing);
+            apiKeys = new ApiKeysModel(config.api.apiKeyTtl);
+            auth = new AuthenticationController(config, accounts, apiKeys);
+
+            api = new ApiServer(config, processor, billing, auth);
         });
 
         afterEach(() => {

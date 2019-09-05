@@ -6,6 +6,8 @@ import {StripeBillingModel} from "./models/BillingModel";
 import {SQLiteAccountsModel} from "./models/AccountsModel";
 import {PlansModel} from "./models/PlansModel";
 import {BillingWebhookController, IBillingWebhookController} from "./controllers/BillingWebhookController";
+import {AuthenticationController, IAuthenticationController} from "./controllers/AuthenticationController";
+import {ApiKeysModel} from "./models/ApiKeysModel";
 
 const c : Configuration = config.util.toObject();
 
@@ -13,7 +15,9 @@ const c : Configuration = config.util.toObject();
     const accounts = await SQLiteAccountsModel.createInstance("AccountsDatabase.sqlite");
     const rlController : IRouterLimitsWebhookController = new RouterLimitsWebhookController(new StripeBillingModel(c), accounts, new PlansModel(c.planMap));
     const billingController : IBillingWebhookController = new BillingWebhookController(c, accounts);
+    const apiKeys = new ApiKeysModel(c.api.apiKeyTtl);
+    const authController : IAuthenticationController = new AuthenticationController(c, accounts, apiKeys);
 
-    const apiServer = new ApiServer(c, rlController, billingController);
+    const apiServer = new ApiServer(c, rlController, billingController, authController);
     console.log(`API listening on port ${apiServer.listenPort}`);
 })();

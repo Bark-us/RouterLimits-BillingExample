@@ -15,6 +15,7 @@ import {BillingWebhookController, IBillingWebhookController} from "../controller
 import {IAccountsModel, MockAccountsModel} from "../models/AccountsModel";
 import {AuthenticationController, IAuthenticationController} from "../controllers/AuthenticationController";
 import {ApiKeysModel} from "../models/ApiKeysModel";
+import {AccountsController, IAccountsController} from "controllers/AccountsController";
 
 const generateTestWebhookObj = () => {
     return {
@@ -62,6 +63,7 @@ describe("Router Limits Webhooks", () => {
         let accounts : IAccountsModel;
         let auth : IAuthenticationController;
         let apiKeys : ApiKeysModel;
+        let accountsController : IAccountsController;
 
         const config : Configuration = {
             api: {listenPort: 0, apiKeyTtl: 1},
@@ -76,8 +78,9 @@ describe("Router Limits Webhooks", () => {
             billing = new BillingWebhookController(config, accounts);
             apiKeys = new ApiKeysModel(config.api.apiKeyTtl);
             auth = new AuthenticationController(config, accounts, apiKeys);
+            accountsController = new AccountsController();
 
-            api = new ApiServer(config, processor, billing, auth);
+            api = new ApiServer(config, processor, billing, auth, accountsController);
         });
 
         afterEach(() => {

@@ -8,6 +8,7 @@ import {PlansModel} from "./models/PlansModel";
 import {BillingWebhookController, IBillingWebhookController} from "./controllers/BillingWebhookController";
 import {AuthenticationController, IAuthenticationController} from "./controllers/AuthenticationController";
 import {ApiKeysModel} from "./models/ApiKeysModel";
+import {AccountsController} from "./controllers/AccountsController";
 
 const c : Configuration = config.util.toObject();
 
@@ -17,7 +18,8 @@ const c : Configuration = config.util.toObject();
     const billingController : IBillingWebhookController = new BillingWebhookController(c, accounts);
     const apiKeys = new ApiKeysModel(c.api.apiKeyTtl);
     const authController : IAuthenticationController = new AuthenticationController(c, accounts, apiKeys);
+    const accountsController = new AccountsController();
 
-    const apiServer = new ApiServer(c, rlController, billingController, authController);
+    const apiServer = new ApiServer(c, rlController, billingController, authController, accountsController);
     console.log(`API listening on port ${apiServer.listenPort}`);
 })();

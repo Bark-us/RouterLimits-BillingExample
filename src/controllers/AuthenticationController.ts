@@ -2,12 +2,13 @@ import {JsonRequestHandler, JsonType} from "../http/JsonReceiver";
 import {Configuration} from "../Config";
 import * as jwt from 'jwt-simple';
 import Ajv from 'ajv';
-import {IAccountsModel} from "../models/AccountsModel";
+import {Account, IAccountsModel} from "../models/AccountsModel";
 import {ExpireSet} from "../ExpireSet";
 import {ApiKeysModel} from "../models/ApiKeysModel";
 
 export interface IAuthenticationController {
     handle : JsonRequestHandler;
+    validateApiKey: (apiKey:string) => Promise<Account | undefined>;
 }
 
 export class AuthenticationController implements IAuthenticationController {
@@ -74,10 +75,14 @@ export class AuthenticationController implements IAuthenticationController {
             }
 
             // Generate API key
-            const apiKey = this.apikeys.generate(acct.id);
+            const apiKey = this.apikeys.generate(acct);
 
             return Promise.resolve({status: 200, body: {apiKey: apiKey, accountId: acct.id}});
         })
+    };
+
+    public readonly validateApiKey = (apiKey: string): Promise<Account | undefined> => {
+        return Promise.resolve(this.apikeys.getInfoByKey(apiKey));
     }
 }
 

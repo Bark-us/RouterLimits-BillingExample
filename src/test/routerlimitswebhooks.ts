@@ -14,8 +14,10 @@ import {IRouterLimitsWebhookController} from "../controllers/RouterLimitsWebhook
 import {BillingWebhookController, IBillingWebhookController} from "../controllers/BillingWebhookController";
 import {IAccountsModel, MockAccountsModel} from "../models/AccountsModel";
 import {AuthenticationController, IAuthenticationController} from "../controllers/AuthenticationController";
-import {ApiKeysModel} from "../models/ApiKeysModel";
-import {AccountsController, IAccountsController} from "controllers/AccountsController";
+import {ApiKeysModel, IApiKeysModel} from "../models/ApiKeysModel";
+import {AccountsController, IAccountsController} from "../controllers/AccountsController";
+import {IBillingModel, MockBillingModel} from "../models/BillingModel";
+import {IRouterLimitsModel, MockRouterLimitsModel} from "../models/RouterLimitsModel";
 
 const generateTestWebhookObj = () => {
     return {
@@ -58,29 +60,35 @@ class MockRouterLimitsWebhookController implements IRouterLimitsWebhookControlle
 describe("Router Limits Webhooks", () => {
     describe("Functional tests", () => {
         let api : ApiServer;
-        let processor : MockRouterLimitsWebhookController;
-        let billing : IBillingWebhookController;
         let accounts : IAccountsModel;
-        let auth : IAuthenticationController;
-        let apiKeys : ApiKeysModel;
+        let apiKeys : IApiKeysModel;
+        let billing : IBillingModel;
+        let rl: IRouterLimitsModel;
+
+        let billingController : IBillingWebhookController;
+        let authController : IAuthenticationController;
         let accountsController : IAccountsController;
+        let processor : MockRouterLimitsWebhookController;
 
         const config : Configuration = {
             api: {listenPort: 0, apiKeyTtl: 1},
             planMap: [],
-            routerlimits: {apiKey: "", sharedSecret: "secretcats", webhookValidInterval: 1, jwtValidInterval: 1},
+            routerlimits: {apiKey: "", sharedSecret: "secretcats", webhookValidInterval: 1, jwtValidInterval: 1, organiztionId: ""},
             stripe: {publishableKey: "",secretKey: "", webhookSecret:"", webhookValidInterval: 300, apiVersion: "2017-06-05"}
         };
 
         beforeEach(() => {
-            processor = new MockRouterLimitsWebhookController();
             accounts = new MockAccountsModel();
-            billing = new BillingWebhookController(config, accounts);
             apiKeys = new ApiKeysModel(config.api.apiKeyTtl);
-            auth = new AuthenticationController(config, accounts, apiKeys);
-            accountsController = new AccountsController();
+            billing = new MockBillingModel();
+            rl = new MockRouterLimitsModel();
 
-            api = new ApiServer(config, processor, billing, auth, accountsController);
+            billingController = new BillingWebhookController(config, accounts);
+            authController = new AuthenticationController(config, accounts, apiKeys);
+            accountsController = new AccountsController(config, billing, accounts, apiKeys, rl);
+            processor = new MockRouterLimitsWebhookController();
+
+            api = new ApiServer(config, processor, billingController, authController, accountsController);
         });
 
         afterEach(() => {

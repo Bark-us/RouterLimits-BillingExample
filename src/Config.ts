@@ -19,6 +19,8 @@ export interface Configuration {
         webhookValidInterval : number;
 
         jwtValidInterval : number;
+
+        organiztionId : string;
     }
 
     stripe : {

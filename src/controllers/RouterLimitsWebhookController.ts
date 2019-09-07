@@ -1,3 +1,5 @@
+import AsyncLock from 'async-lock';
+const lock = new AsyncLock();
 import {IBillingModel} from "../models/BillingModel";
 import {IAccountsModel} from "../models/AccountsModel";
 import {IPlansModel} from "../models/PlansModel";
@@ -23,22 +25,20 @@ export class RouterLimitsWebhookController implements IRouterLimitsWebhookContro
     }
 
     handleAccountCreated(timestamp: number, accountId: string, firstName: string, lastName: string, email: string): Promise<void> {
-        // Check to see if we have an account with that Router Limits id already
-        return this.accounts.get(accountId)
-            .then((account) => {
+        return lock.acquire('createCustomer-create', async () => {
+            const account = await this.accounts.get(accountId);
 
-                // No work to do if account already exists
-                if (account) {
-                    return Promise.resolve();
-                }
+            // No work to do if account already exists
+            if (account) {
+                return;
+            }
 
-                // Create customer in billing system
-                return this.billing.createCustomer(firstName, lastName, email)
-                    .then((billingId) => {
-                        // Create mapping between billing system customer and Router Limits account
-                        return this.accounts.create(accountId, billingId);
-                    })
-            })
+            // Create customer in billing system
+            const billingId = await this.billing.createCustomer(firstName, lastName, email);
+
+            // Create mapping between billing system customer and Router Limits account
+            await this.accounts.create(accountId, billingId);
+        });
     }
 
     handleAccountSubscriptionCancel(timestamp: number, accountId: string): Promise<void> {

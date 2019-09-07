@@ -9,17 +9,21 @@ import {BillingWebhookController, IBillingWebhookController} from "./controllers
 import {AuthenticationController, IAuthenticationController} from "./controllers/AuthenticationController";
 import {ApiKeysModel} from "./models/ApiKeysModel";
 import {AccountsController} from "./controllers/AccountsController";
+import {RouterLimitsModel} from "./models/RouterLimitsModel";
 
 const c : Configuration = config.util.toObject();
 
 (async () => {
     const accounts = await SQLiteAccountsModel.createInstance("AccountsDatabase.sqlite");
-    const rlController : IRouterLimitsWebhookController = new RouterLimitsWebhookController(new StripeBillingModel(c), accounts, new PlansModel(c.planMap));
-    const billingController : IBillingWebhookController = new BillingWebhookController(c, accounts);
+    const billing = new StripeBillingModel(c);
     const apiKeys = new ApiKeysModel(c.api.apiKeyTtl);
+    const rl = new RouterLimitsModel(c);
+
+    const rlController : IRouterLimitsWebhookController = new RouterLimitsWebhookController(billing, accounts, new PlansModel(c.planMap));
+    const billingController : IBillingWebhookController = new BillingWebhookController(c, accounts);
     const authController : IAuthenticationController = new AuthenticationController(c, accounts, apiKeys);
-    const accountsController = new AccountsController();
+    const accountsController = new AccountsController(c, billing, accounts, apiKeys, rl);
 
     const apiServer = new ApiServer(c, rlController, billingController, authController, accountsController);
-    console.log(`API listening on port ${apiServer.listenPort}`);
+    console.log(`API and Webhook handlers listening on port ${apiServer.listenPort}`);
 })();

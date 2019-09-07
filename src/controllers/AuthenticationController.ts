@@ -4,7 +4,7 @@ import * as jwt from 'jwt-simple';
 import Ajv from 'ajv';
 import {Account, IAccountsModel} from "../models/AccountsModel";
 import {ExpireSet} from "../ExpireSet";
-import {ApiKeysModel} from "../models/ApiKeysModel";
+import {IApiKeysModel} from "../models/ApiKeysModel";
 
 export interface IAuthenticationController {
     handle : JsonRequestHandler;
@@ -14,10 +14,10 @@ export interface IAuthenticationController {
 export class AuthenticationController implements IAuthenticationController {
     private readonly config : Configuration;
     private readonly accounts : IAccountsModel;
-    private readonly apikeys : ApiKeysModel;
+    private readonly apikeys : IApiKeysModel;
     private readonly usedIds : ExpireSet<string>;
 
-    constructor(config : Configuration, accounts: IAccountsModel, apiKeys: ApiKeysModel) {
+    constructor(config : Configuration, accounts: IAccountsModel, apiKeys: IApiKeysModel) {
         this.config = config;
         this.accounts = accounts;
         this.apikeys = apiKeys;

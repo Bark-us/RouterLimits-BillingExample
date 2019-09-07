@@ -19,6 +19,7 @@
   "homepage": "https://github.com/RouterLimits/ThirdPartyBillingExample#readme",
   "devDependencies": {
     "@types/ajv": "^1.0.0",
+    "@types/async-lock": "^1.1.1",
     "@types/axios": "^0.14.0",
     "@types/body-parser": "^1.17.1",
     "@types/chai": "^4.2.0",
@@ -38,6 +39,7 @@
   },
   "dependencies": {
     "ajv": "^6.10.2",
+    "async-lock": "^1.2.2",
     "body-parser": "^1.19.0",
     "config": "^3.2.2",
     "express": "^4.17.1",

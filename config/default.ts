@@ -24,7 +24,10 @@ const c : Configuration = {
         // Webhooks will only be accepted within this many seconds of their attempt creation date
         webhookValidInterval: 300,
 
-        jwtValidInterval: 300
+        jwtValidInterval: 300,
+
+        // Your Router Limits organization id
+        organiztionId: ""
     },
 
     // Settings for communicating with stripe. If you've implemented code for a different billing/payment system, this

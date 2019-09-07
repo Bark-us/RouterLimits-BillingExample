@@ -15,7 +15,7 @@ export interface IAccountsModel {
      * @param id
      * @param billingId
      */
-    create(id : string, billingId: string) : Promise<void>;
+    create(id : string, billingId: string) : Promise<Account>;
 }
 
 export interface Account {
@@ -39,11 +39,11 @@ export class MockAccountsModel implements IAccountsModel {
         this.accountsReverse = new Map();
     }
 
-    create(id: string, billingId: string): Promise<void> {
+    create(id: string, billingId: string): Promise<Account> {
         const a = this.accounts.get(id);
         if (a) {
             if (a.billingId === billingId) {
-                return Promise.resolve();
+                return Promise.resolve(a);
             }
             return Promise.reject(new Error("Already created"));
         }
@@ -51,7 +51,7 @@ export class MockAccountsModel implements IAccountsModel {
         const obj = {id : id, billingId: billingId};
         this.accounts.set(id, obj);
         this.accountsReverse.set(billingId, obj);
-        return Promise.resolve();
+        return Promise.resolve(obj);
     }
 
     get(id: string): Promise<Account | undefined> {
@@ -113,14 +113,14 @@ export class SQLiteAccountsModel implements IAccountsModel {
         this.db = db;
     }
 
-    create(id: string, billingId: string): Promise<void> {
+    create(id: string, billingId: string): Promise<Account> {
         return new Promise((resolve, reject) => {
             this.db.run('INSERT INTO `accounts` (`rlId`, `billingId`) VALUES (?, ?);', id, billingId, (err: Error) => {
                 if (err) {
                     return reject(err);
                 }
 
-                return resolve();
+                return resolve({id: id, billingId: billingId});
             })
         })
     }

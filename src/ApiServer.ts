@@ -11,6 +11,7 @@ import {JsonReceiver} from "./http/JsonReceiver";
 import {IAuthenticationController} from "./controllers/AuthenticationController";
 import {IAccountsController} from "./controllers/AccountsController";
 import {Request, Response} from "express";
+import {IPlansController} from "./controllers/PlansController";
 
 export class ApiServer {
     get listenPort() : number {
@@ -24,7 +25,8 @@ export class ApiServer {
                 rlController : IRouterLimitsWebhookController,
                 billingController : IBillingWebhookController,
                 authController : IAuthenticationController,
-                accountsController : IAccountsController
+                accountsController : IAccountsController,
+                plansController : IPlansController
     ) {
         this.expressApp = express();
 
@@ -68,6 +70,9 @@ export class ApiServer {
             .post(accountAuthHelper,jsonParser, new JsonReceiver(accountsController.accountPaymentMethodCreation).process);
         this.expressApp.delete('/api/accounts/:accountId/paymentMethods/:methodId', accountAuthHelper, jsonParser, new JsonReceiver(accountsController.accountPaymentMethodDelete).process);
         this.expressApp.post('/api/accounts/:accountId/paymentMethods/:methodId/setDefault', accountAuthHelper, jsonParser, new JsonReceiver(accountsController.accountPaymentMethodSetDefault).process);
+
+        // Plans
+        this.expressApp.get('/api/plans', new JsonReceiver(plansController.plansList).process);
 
         this.server = this.expressApp.listen(config.api.listenPort);
     }

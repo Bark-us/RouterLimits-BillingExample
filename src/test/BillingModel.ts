@@ -23,8 +23,8 @@ describe("StripeBillingModel", () => {
         ]).then((results) => {
             testPlanId = results[0];
             testPlanId2 = results[1];
-            c.planMap.push({id : "test", billingId: testPlanId});
-            c.planMap.push({id : "test2", billingId: testPlanId2});
+            c.planMap.push({id : "test", billingId: testPlanId, name: "Billy's Plan"});
+            c.planMap.push({id : "test2", billingId: testPlanId2, name: "Timmy's Plan"});
 
             return Promise.resolve();
         })

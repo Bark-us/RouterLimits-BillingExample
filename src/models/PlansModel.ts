@@ -6,6 +6,8 @@ export interface IPlansModel {
      * @param id Router Limits id of the plan
      */
     get(id : string) : Promise<PlanMapping | undefined>;
+
+    getAll() : Promise<Array<PlanMapping>>;
 }
 
 export class PlansModel implements IPlansModel {
@@ -22,5 +24,9 @@ export class PlansModel implements IPlansModel {
         const p = this.rlPlansToBillingPlans.get(id);
 
         return Promise.resolve(p);
+    }
+
+    async getAll(): Promise<Array<PlanMapping>> {
+        return Array.from(this.rlPlansToBillingPlans.values());
     }
 }

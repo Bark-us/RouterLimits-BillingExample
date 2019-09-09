@@ -11,6 +11,7 @@ import {ApiKeysModel} from "./models/ApiKeysModel";
 import {AccountsController} from "./controllers/AccountsController";
 import {RouterLimitsModel} from "./models/RouterLimitsModel";
 import AsyncLock from 'async-lock';
+import {PlansController} from "./controllers/PlansController";
 
 const c : Configuration = config.util.toObject();
 
@@ -27,7 +28,8 @@ const c : Configuration = config.util.toObject();
     const billingWebhooks : IBillingWebhookController = new BillingWebhookController(c, accounts);
     const authController : IAuthenticationController = new AuthenticationController(c, accounts, apiKeys);
     const accountsController = new AccountsController(billing, accounts, apiKeys, rl, lock);
+    const plansController = new PlansController(plans);
 
-    const apiServer = new ApiServer(c, rlWebhooks, billingWebhooks, authController, accountsController);
+    const apiServer = new ApiServer(c, rlWebhooks, billingWebhooks, authController, accountsController, plansController);
     console.log(`API and Webhook handlers listening on port ${apiServer.listenPort}`);
 })();

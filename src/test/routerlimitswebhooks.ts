@@ -19,6 +19,8 @@ import {ApiKeysModel, IApiKeysModel} from "../models/ApiKeysModel";
 import {AccountsController, IAccountsController} from "../controllers/AccountsController";
 import {IBillingModel, MockBillingModel} from "../models/BillingModel";
 import {IRouterLimitsModel, MockRouterLimitsModel} from "../models/RouterLimitsModel";
+import {PlansController} from "../controllers/PlansController";
+import {IPlansModel, PlansModel} from "../models/PlansModel";
 
 const generateTestWebhookObj = () => {
     return {
@@ -65,6 +67,7 @@ describe("Router Limits Webhooks", () => {
         let apiKeys : IApiKeysModel;
         let billing : IBillingModel;
         let rl: IRouterLimitsModel;
+        let plans: IPlansModel;
 
         let billingController : IBillingWebhookController;
         let authController : IAuthenticationController;
@@ -83,13 +86,15 @@ describe("Router Limits Webhooks", () => {
             apiKeys = new ApiKeysModel(config.api.apiKeyTtl);
             billing = new MockBillingModel();
             rl = new MockRouterLimitsModel();
+            plans = new PlansModel(config.planMap);
 
             billingController = new BillingWebhookController(config, accounts);
             authController = new AuthenticationController(config, accounts, apiKeys);
             accountsController = new AccountsController(billing, accounts, apiKeys, rl, new AsyncLock());
             processor = new MockRouterLimitsWebhookController();
+            const plansController = new PlansController(plans);
 
-            api = new ApiServer(config, processor, billingController, authController, accountsController);
+            api = new ApiServer(config, processor, billingController, authController, accountsController, plansController);
         });
 
         afterEach(() => {

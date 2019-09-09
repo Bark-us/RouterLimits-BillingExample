@@ -1,8 +1,8 @@
 import AsyncLock from 'async-lock';
-const lock = new AsyncLock();
 import {IBillingModel} from "../models/BillingModel";
 import {IAccountsModel} from "../models/AccountsModel";
 import {IPlansModel} from "../models/PlansModel";
+import {LockNames} from "../Constants";
 
 /**
  * Represents a class which has the "business logic" of handling the Router Limits webhooks
@@ -17,15 +17,17 @@ export class RouterLimitsWebhookController implements IRouterLimitsWebhookContro
     private readonly billing : IBillingModel;
     private readonly accounts : IAccountsModel;
     private readonly plans : IPlansModel;
+    private readonly lock: AsyncLock;
 
-    constructor(billing : IBillingModel, accounts : IAccountsModel, plans : IPlansModel) {
+    constructor(billing : IBillingModel, accounts : IAccountsModel, plans : IPlansModel, lock: AsyncLock) {
         this.billing = billing;
         this.accounts = accounts;
         this.plans = plans;
+        this.lock = lock;
     }
 
     handleAccountCreated(timestamp: number, accountId: string, firstName: string, lastName: string, email: string): Promise<void> {
-        return lock.acquire('createCustomer-create', async () => {
+        return this.lock.acquire(LockNames.CreateCustomerCreateAccount, async () => {
             const account = await this.accounts.get(accountId);
 
             // No work to do if account already exists

@@ -1,4 +1,5 @@
 import {ApiServer} from "../ApiServer";
+import AsyncLock from 'async-lock';
 import axios from 'axios';
 import {assert, expect} from "chai";
 import crypto from "crypto";
@@ -85,7 +86,7 @@ describe("Router Limits Webhooks", () => {
 
             billingController = new BillingWebhookController(config, accounts);
             authController = new AuthenticationController(config, accounts, apiKeys);
-            accountsController = new AccountsController(config, billing, accounts, apiKeys, rl);
+            accountsController = new AccountsController(billing, accounts, apiKeys, rl, new AsyncLock());
             processor = new MockRouterLimitsWebhookController();
 
             api = new ApiServer(config, processor, billingController, authController, accountsController);

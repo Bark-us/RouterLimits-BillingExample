@@ -1,12 +1,11 @@
 // import Ajv from 'ajv';
 import AsyncLock from 'async-lock';
-const lock = new AsyncLock();
 import {JsonRequestHandler} from "../http/JsonReceiver";
-import {Configuration} from "../Config";
 import {IBillingModel} from "../models/BillingModel";
 import {IAccountsModel} from "../models/AccountsModel";
 import {IApiKeysModel} from "../models/ApiKeysModel";
 import {IRouterLimitsModel} from "../models/RouterLimitsModel";
+import {LockNames} from "../Constants";
 
 export interface IAccountsController {
     accountCreation : JsonRequestHandler;
@@ -19,19 +18,18 @@ export interface IAccountsController {
 }
 
 export class AccountsController implements IAccountsController {
-    // @ts-ignore
-    private readonly config : Configuration;
     private readonly billing : IBillingModel;
     private readonly accounts: IAccountsModel;
     private readonly apiKeys: IApiKeysModel;
     private readonly rl: IRouterLimitsModel;
+    private readonly lock: AsyncLock;
 
-    constructor(config: Configuration, billing: IBillingModel, accounts: IAccountsModel, apiKeys: IApiKeysModel, rl: IRouterLimitsModel) {
-        this.config = config;
+    constructor(billing: IBillingModel, accounts: IAccountsModel, apiKeys: IApiKeysModel, rl: IRouterLimitsModel, lock: AsyncLock) {
         this.billing = billing;
         this.accounts = accounts;
         this.apiKeys = apiKeys;
         this.rl = rl;
+        this.lock = lock;
     }
 
     accountCreation: JsonRequestHandler = (pathParams, queryParams, body) => {
@@ -43,7 +41,7 @@ export class AccountsController implements IAccountsController {
         const request = body as AccountCreateRequest;
 
         // Locking to prevent race condition with webhook posted from Router Limits
-        return lock.acquire('createCustomer-create', async () => {
+        return this.lock.acquire(LockNames.CreateCustomerCreateAccount, async () => {
             // Create the account in Router Limits
             const accountId = await this.rl.createAccount(request.userId, request.routerPairingCode);
             const rlAccount = await this.rl.getAccount(accountId);

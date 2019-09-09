@@ -1,3 +1,4 @@
+import AsyncLock from 'async-lock';
 import 'mocha';
 import {assert} from "chai";
 import {RouterLimitsWebhookController} from "../controllers/RouterLimitsWebhookController";
@@ -26,7 +27,7 @@ describe("RouterLimitsWebhookController", () => {
             accounts = new MockAccountsModel();
             plans = new PlansModel(fakePlans);
 
-            rlc = new RouterLimitsWebhookController(billing, accounts, plans);
+            rlc = new RouterLimitsWebhookController(billing, accounts, plans, new AsyncLock());
         });
 
         describe("handleAccountCreated", () => {

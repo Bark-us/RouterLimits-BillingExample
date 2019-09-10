@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import {Configuration} from "../Config";
 import ISubscription = Stripe.subscriptions.ISubscription;
+
 export interface IBillingModel {
 
     /**
@@ -19,6 +20,8 @@ export interface IBillingModel {
      * @param id
      */
     get(id : string) : Promise<string | null>;
+
+    getPaymentMethods(billingId: string) : Promise<Array<PaymentMethod>>;
 
     /**
      * Subscribe a customer to the specified plan
@@ -71,6 +74,10 @@ export class MockBillingModel implements IBillingModel {
         c.planId = planId;
         return Promise.resolve();
     }
+
+    async getPaymentMethods(billingId: string): Promise<Array<PaymentMethod>> {
+        return [];
+    }
 }
 
 export class StripeBillingModel implements IBillingModel {
@@ -113,6 +120,29 @@ export class StripeBillingModel implements IBillingModel {
             }
             return Promise.resolve(null);
         })
+    }
+
+    async getPaymentMethods(billingId: string): Promise<PaymentMethod[]> {
+        const obj = await this.stripe.customers.retrieve(billingId);
+
+        // TODO support methods besides cards, if desired
+        const cards = obj.sources ? obj.sources.data.filter((s) => {
+            return s.object === "card";
+        }) : [];
+
+        return cards.map((c) => {
+            const cardInfo = c as Stripe.ICard;
+            return {
+                id: c.id,
+                isDefault: c.id === obj.default_source,
+                cardInfo: {
+                    brand: cardInfo.brand,
+                    expMonth: cardInfo.exp_month,
+                    expYear: cardInfo.exp_year,
+                    last4: cardInfo.last4
+                }
+            }
+        });
     }
 
     subscribe(id: string, planId: string): Promise<void> {
@@ -160,3 +190,5 @@ export class StripeBillingModel implements IBillingModel {
         })
     }
 }
+
+export type PaymentMethod = {id: string, isDefault: boolean, cardInfo: {brand: string, expMonth: number, expYear: number, last4: string}};

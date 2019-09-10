@@ -108,8 +108,21 @@ export class AccountsController implements IAccountsController {
         return Promise.resolve({status:501});
     };
 
-    accountPaymentMethodsList: JsonRequestHandler = (pathParams, queryParams, body) => {
-        return Promise.resolve({status:501});
+    accountPaymentMethodsList: JsonRequestHandler = async (pathParams, queryParams, body, authLocals) => {
+        if (!authLocals || !authLocals.account || authLocals.account.id !== pathParams.accountId) {
+            return {status: 403};
+        }
+        const accountInfo = authLocals.account as Account;
+
+        // TODO implement pagination as specified in api docs
+        const methods = await this.billing.getPaymentMethods(accountInfo.billingId);
+        return {
+            status:200,
+            body: {
+                hasMore: false,
+                lastEvaluatedKey: methods.length ? methods[methods.length - 1].id : undefined,
+                data : methods
+        }};
     };
 
     accountUpdate: JsonRequestHandler = async (pathParams, queryParams, body, authLocals) => {

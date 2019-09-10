@@ -104,8 +104,18 @@ export class AccountsController implements IAccountsController {
         return Promise.resolve({status:501});
     };
 
-    accountPaymentMethodSetDefault: JsonRequestHandler = (pathParams, queryParams, body) => {
-        return Promise.resolve({status:501});
+    accountPaymentMethodSetDefault: JsonRequestHandler = async (pathParams, queryParams, body, authLocals) => {
+        if (!pathParams.accountId || !pathParams.methodId) {
+            return {status: 400, body: "Bad request"};
+        }
+
+        if (!authLocals || !authLocals.account || authLocals.account.id !== pathParams.accountId) {
+            return {status: 403};
+        }
+        const accountInfo = authLocals.account as Account;
+
+        await this.billing.setDefaultPaymentMethod(accountInfo.billingId, pathParams.methodId)
+        return {status:204};
     };
 
     accountPaymentMethodsList: JsonRequestHandler = async (pathParams, queryParams, body, authLocals) => {

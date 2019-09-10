@@ -23,6 +23,8 @@ export interface IBillingModel {
 
     getPaymentMethods(billingId: string) : Promise<Array<PaymentMethod>>;
 
+    setDefaultPaymentMethod(billingId: string, methodId: string) : Promise<void>;
+
     /**
      * Subscribe a customer to the specified plan
      * @param billingId the customer's id
@@ -65,6 +67,13 @@ export class MockBillingModel implements IBillingModel {
         return Promise.resolve(c.planId);
     }
 
+    async getPaymentMethods(billingId: string): Promise<Array<PaymentMethod>> {
+        return [];
+    }
+
+    async setDefaultPaymentMethod(billingId: string, methodId: string): Promise<void> {
+    }
+
     subscribe(id: string, planId: string): Promise<void> {
         const c = this.customers.get(id);
         if (!c) {
@@ -73,10 +82,6 @@ export class MockBillingModel implements IBillingModel {
 
         c.planId = planId;
         return Promise.resolve();
-    }
-
-    async getPaymentMethods(billingId: string): Promise<Array<PaymentMethod>> {
-        return [];
     }
 }
 
@@ -143,6 +148,10 @@ export class StripeBillingModel implements IBillingModel {
                 }
             }
         });
+    }
+
+    async setDefaultPaymentMethod(billingId: string, methodId: string): Promise<void> {
+        await this.stripe.customers.update(billingId, {default_source: methodId});
     }
 
     subscribe(id: string, planId: string): Promise<void> {

@@ -8,25 +8,37 @@ export interface IPlansModel {
     get(id : string) : Promise<PlanMapping | undefined>;
 
     getAll() : Promise<Array<PlanMapping>>;
+
+    /**
+     * Get plan info by billing system id
+     * @param billingId billing system id of the plan
+     */
+    getByBillingId(billingId: string) : Promise<PlanMapping | undefined>;
 }
 
 export class PlansModel implements IPlansModel {
-    private readonly rlPlansToBillingPlans : Map<String, PlanMapping>;
+    private readonly rlPlansToPlans : Map<String, PlanMapping>;
+    private readonly billingPlanstoPlans : Map<string, PlanMapping>;
 
     constructor(plans : Array<PlanMapping>) {
-        this.rlPlansToBillingPlans = new Map();
+        this.rlPlansToPlans = new Map();
+        this.billingPlanstoPlans = new Map();
+
         plans.forEach((p) => {
-            this.rlPlansToBillingPlans.set(p.id, p);
+            this.rlPlansToPlans.set(p.id, p);
+            this.billingPlanstoPlans.set(p.billingId, p);
         })
     }
 
-    get(id: string): Promise<PlanMapping | undefined> {
-        const p = this.rlPlansToBillingPlans.get(id);
-
-        return Promise.resolve(p);
+    async get(id: string): Promise<PlanMapping | undefined> {
+        return this.rlPlansToPlans.get(id);
     }
 
     async getAll(): Promise<Array<PlanMapping>> {
-        return Array.from(this.rlPlansToBillingPlans.values());
+        return Array.from(this.rlPlansToPlans.values());
+    }
+
+    async getByBillingId(billingId: string) : Promise<PlanMapping | undefined> {
+        return this.billingPlanstoPlans.get(billingId);
     }
 }

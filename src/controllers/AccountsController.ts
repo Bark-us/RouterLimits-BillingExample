@@ -6,6 +6,7 @@ import {IAccountsModel} from "../models/AccountsModel";
 import {IApiKeysModel} from "../models/ApiKeysModel";
 import {IRouterLimitsModel} from "../models/RouterLimitsModel";
 import {LockNames} from "../Constants";
+import {IPlansModel} from "models/PlansModel";
 
 export interface IAccountsController {
     accountCreation : JsonRequestHandler;
@@ -22,13 +23,15 @@ export class AccountsController implements IAccountsController {
     private readonly accounts: IAccountsModel;
     private readonly apiKeys: IApiKeysModel;
     private readonly rl: IRouterLimitsModel;
+    private readonly plans: IPlansModel;
     private readonly lock: AsyncLock;
 
-    constructor(billing: IBillingModel, accounts: IAccountsModel, apiKeys: IApiKeysModel, rl: IRouterLimitsModel, lock: AsyncLock) {
+    constructor(billing: IBillingModel, accounts: IAccountsModel, apiKeys: IApiKeysModel, rl: IRouterLimitsModel, plans: IPlansModel, lock: AsyncLock) {
         this.billing = billing;
         this.accounts = accounts;
         this.apiKeys = apiKeys;
         this.rl = rl;
+        this.plans = plans;
         this.lock = lock;
     }
 
@@ -71,8 +74,26 @@ export class AccountsController implements IAccountsController {
         });
     };
 
-    accountGet: JsonRequestHandler = (pathParams, queryParams, body) => {
-        return Promise.resolve({status:501});
+    accountGet: JsonRequestHandler = async (pathParams, queryParams, body, authLocals) => {
+        if (!authLocals || !authLocals.account || authLocals.account.id !== pathParams.accountId) {
+            return {status: 403};
+        }
+
+        // Get billing id of plan
+        const billingPlanId = await this.billing.get(authLocals.account.billingId);
+
+        // If no billing plan id set for the user, user is not subscribed
+        if (!billingPlanId) {
+            return {status: 200, body: {id: authLocals.account.id, active: false}}
+        }
+
+        // Get more information about the plan
+        const plan = await this.plans.getByBillingId(billingPlanId);
+        if (!plan) {
+            throw new Error("Failed to find plan");
+        }
+
+        return {status:200, body: {id: authLocals.account.id, active: true, plan: {id: plan.id, name: plan.name}}};
     };
 
     accountPaymentMethodCreation: JsonRequestHandler = (pathParams, queryParams, body) => {

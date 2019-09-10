@@ -27,7 +27,7 @@ const c : Configuration = config.util.toObject();
     const rlWebhooks : IRouterLimitsWebhookController = new RouterLimitsWebhookController(billing, accounts, plans, lock);
     const billingWebhooks : IBillingWebhookController = new BillingWebhookController(c, accounts);
     const authController : IAuthenticationController = new AuthenticationController(c, accounts, apiKeys);
-    const accountsController = new AccountsController(billing, accounts, apiKeys, rl, lock);
+    const accountsController = new AccountsController(billing, accounts, apiKeys, rl, plans, lock);
     const plansController = new PlansController(plans);
 
     const apiServer = new ApiServer(c, rlWebhooks, billingWebhooks, authController, accountsController, plansController);

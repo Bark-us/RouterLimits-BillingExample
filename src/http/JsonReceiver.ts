@@ -3,7 +3,7 @@ import {Request, Response} from "express";
 export type JsonType = object | string | number | JsonArray;
 interface JsonArray extends Array<JsonType> {}
 
-export type JsonRequestHandler = (pathParams : any, queryParams : any, body : any) => Promise<{body? : JsonType, status? : number, headers? : object}>;
+export type JsonRequestHandler = (pathParams : any, queryParams : any, body : any, authLocals? : any) => Promise<{body? : JsonType, status? : number, headers? : object}>;
 
 export class JsonReceiver {
     private readonly handler : JsonRequestHandler;
@@ -12,7 +12,7 @@ export class JsonReceiver {
     }
 
     public readonly process = (req: Request, res: Response) : void => {
-        this.handler(req.params, req.query, req.body).then((result) => {
+        this.handler(req.params, req.query, req.body, res.locals).then((result) => {
             res.set(result.headers || {});
             res.status(result.status || (result.body ? 200 : 204));
             if (result.body) {

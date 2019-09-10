@@ -75,9 +75,9 @@ export class AuthenticationController implements IAuthenticationController {
             }
 
             // Generate API key
-            const apiKey = this.apikeys.generate(acct);
-
-            return Promise.resolve({status: 200, body: {apiKey: apiKey, accountId: acct.id}});
+            return this.apikeys.generate(acct).then((apiKey) => {
+                return Promise.resolve({status: 200, body: {apiKey: apiKey, accountId: acct.id}});
+            });
         })
     };
 

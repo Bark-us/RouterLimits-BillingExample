@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import {Configuration} from "../Config";
 import ISubscription = Stripe.subscriptions.ISubscription;
+import {PaymentMethod} from "../http/HttpTypes";
 
 export interface IBillingModel {
 
@@ -231,5 +232,3 @@ export class StripeBillingModel implements IBillingModel {
         })
     }
 }
-
-export type PaymentMethod = {id: string, isDefault: boolean, cardInfo: {brand: string, expMonth: number, expYear: number, last4: string}};

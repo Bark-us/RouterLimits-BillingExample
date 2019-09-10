@@ -75,7 +75,7 @@ describe("Router Limits Webhooks", () => {
         let processor : MockRouterLimitsWebhookController;
 
         const config : Configuration = {
-            api: {listenPort: 0, apiKeyTtl: 1},
+            api: {listenPort: 0, apiKeyTtl: 1, allowedOrigins: "*"},
             planMap: [],
             routerlimits: {apiKey: "", sharedSecret: "secretcats", webhookValidInterval: 1, jwtValidInterval: 1, organiztionId: ""},
             stripe: {publishableKey: "",secretKey: "", webhookSecret:"", webhookValidInterval: 300, apiVersion: "2017-06-05"}
@@ -89,7 +89,7 @@ describe("Router Limits Webhooks", () => {
             plans = new PlansModel(config.planMap);
             const lock = new AsyncLock();
 
-            billingController = new BillingWebhookController(config, accounts, lock);
+            billingController = new BillingWebhookController(accounts, rl, lock);
             authController = new AuthenticationController(config, accounts, apiKeys);
             accountsController = new AccountsController(billing, accounts, apiKeys, rl, plans, lock);
             processor = new MockRouterLimitsWebhookController();

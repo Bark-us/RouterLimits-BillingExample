@@ -12,6 +12,7 @@ import {IAuthenticationController} from "./controllers/AuthenticationController"
 import {IAccountsController} from "./controllers/AccountsController";
 import {Request, Response} from "express";
 import {IPlansController} from "./controllers/PlansController";
+import {AccountsReceiver} from "./http/AccountsReceiver";
 
 export class ApiServer {
     get listenPort() : number {
@@ -51,25 +52,74 @@ export class ApiServer {
             }
         };
 
+        const corsWrangler = (req: Request, res: Response, next: express.NextFunction) => {
+            let origin = req.header("origin");
+            if (origin) {
+                origin = origin.toLowerCase();
+            }
+
+            const allowedOrigins = config.api.allowedOrigins;
+
+            if (req.method.toLowerCase() === "options") {
+                if (!origin || (allowedOrigins !== "*" && allowedOrigins.indexOf(origin) < 0)) {
+                    res.sendStatus(403);
+                    return;
+                }
+
+                res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-API-Key,Accept-Version');
+                res.setHeader('Access-Control-Allow-Methods', 'DELETE,GET,POST');
+                res.setHeader("Access-Control-Allow-Origin", origin);
+                res.setHeader('Vary', 'Origin');
+                res.setHeader('Access-Control-Expose-Headers', 'api-version, content-length, content-md5, content-type, date, request-id, response-time');
+                res.setHeader('Access-Control-Max-Age', 86400);
+                res.sendStatus(200);
+                return;
+            }
+            else if (origin) {
+                if (allowedOrigins !== "*" && allowedOrigins.indexOf(origin) < 0) {
+                    res.sendStatus(403);
+                    return;
+                }
+                res.setHeader("Access-Control-Allow-Origin", origin);
+                res.setHeader('Access-Control-Expose-Headers', 'api-version, content-length, content-md5, content-type, date, request-id, response-time');
+                next();
+                return;
+            }
+
+            next();
+        };
+
+        const accountsReceiver = new AccountsReceiver(accountsController);
+
         // Webhooks
         this.expressApp.post('/webhooks/routerlimits', greedyRawParser, new RouterLimitsWebhookReceiver(config, rlController).router);
         this.expressApp.post('/webhooks/billing', greedyRawParser, new StripeWebhookReceiver(config, billingController).router);
 
         // Authenticate via JWT
-        this.expressApp.post('/api/authenticate', jsonParser, new JsonReceiver(authController.handle).process);
+        this.expressApp.route('/api/authenticate')
+            .post(corsWrangler, jsonParser, new JsonReceiver(authController.handle).process)
+            .options(corsWrangler);
 
         // Accounts
-        this.expressApp.post('/api/accounts', jsonParser, new JsonReceiver(accountsController.accountCreation).process);
+        this.expressApp.route('/api/accounts')
+            .post(corsWrangler, jsonParser, accountsReceiver.acctCreate)
+            .options(corsWrangler);
         this.expressApp.route('/api/accounts/:accountId')
-            .get(accountAuthHelper, jsonParser, new JsonReceiver(accountsController.accountGet).process)
-            .post(accountAuthHelper,jsonParser, new JsonReceiver(accountsController.accountUpdate).process);
+            .get(corsWrangler, accountAuthHelper, jsonParser, accountsReceiver.acctGet)
+            .post(corsWrangler, accountAuthHelper,jsonParser, accountsReceiver.acctUpdate)
+            .options(corsWrangler);
 
         // Account payment methods
         this.expressApp.route('/api/accounts/:accountId/paymentMethods')
-            .get(accountAuthHelper,jsonParser, new JsonReceiver(accountsController.accountPaymentMethodsList).process)
-            .post(accountAuthHelper,jsonParser, new JsonReceiver(accountsController.accountPaymentMethodCreation).process);
-        this.expressApp.delete('/api/accounts/:accountId/paymentMethods/:methodId', accountAuthHelper, jsonParser, new JsonReceiver(accountsController.accountPaymentMethodDelete).process);
-        this.expressApp.post('/api/accounts/:accountId/paymentMethods/:methodId/setDefault', accountAuthHelper, jsonParser, new JsonReceiver(accountsController.accountPaymentMethodSetDefault).process);
+            .get(corsWrangler, accountAuthHelper,jsonParser, accountsReceiver.acctListPaymentMethods)
+            .post(corsWrangler, accountAuthHelper,jsonParser, accountsReceiver.acctCreatePaymentMethod)
+            .options(corsWrangler);
+        this.expressApp.route('/api/accounts/:accountId/paymentMethods/:methodId')
+            .delete(accountAuthHelper, jsonParser, new JsonReceiver(accountsController.accountPaymentMethodDelete).process)
+            .options(corsWrangler);
+        this.expressApp.route('/api/accounts/:accountId/paymentMethods/:methodId/setDefault')
+            .post(corsWrangler, accountAuthHelper, jsonParser, new JsonReceiver(accountsController.accountPaymentMethodSetDefault).process)
+            .options(corsWrangler);
 
         // Plans
         this.expressApp.get('/api/plans', new JsonReceiver(plansController.plansList).process);

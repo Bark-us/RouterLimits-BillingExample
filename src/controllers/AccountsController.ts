@@ -1,4 +1,3 @@
-import Ajv from 'ajv';
 import AsyncLock from 'async-lock';
 import {JsonRequestHandler} from "../http/JsonReceiver";
 import {IBillingModel} from "../models/BillingModel";
@@ -7,13 +6,22 @@ import {IApiKeysModel} from "../models/ApiKeysModel";
 import {IRouterLimitsModel} from "../models/RouterLimitsModel";
 import {LockNames} from "../Constants";
 import {IPlansModel} from "../models/PlansModel";
+import {
+    AccountCreateRequest,
+    AccountCreateResponse,
+    AccountUpdateRequest,
+    ApiAccount,
+    PaymentMethod,
+    PaymentMethodCreateRequest
+} from "../http/HttpTypes";
 
 export interface IAccountsController {
-    accountCreation : JsonRequestHandler;
-    accountGet : JsonRequestHandler;
-    accountUpdate : JsonRequestHandler;
-    accountPaymentMethodsList : JsonRequestHandler;
-    accountPaymentMethodCreation : JsonRequestHandler;
+    accountCreation(req : AccountCreateRequest) : Promise<AccountCreateResponse>;
+    accountGet(account : Account) : Promise<ApiAccount>;
+    accountUpdate(accountInfo: Account, req : AccountUpdateRequest) : Promise<void>;
+    accountPaymentMethodsList(accountInfo: Account) : Promise<PaymentMethod[]>;
+    accountPaymentMethodCreation(accountInfo: Account, req : PaymentMethodCreateRequest) : Promise<PaymentMethod>;
+    // accountPaymentMethodCreation : JsonRequestHandler;
     accountPaymentMethodDelete : JsonRequestHandler;
     accountPaymentMethodSetDefault : JsonRequestHandler;
 }
@@ -35,18 +43,11 @@ export class AccountsController implements IAccountsController {
         this.lock = lock;
     }
 
-    accountCreation: JsonRequestHandler = (pathParams, queryParams, body) => {
-        // Make sure we have the params we expect (routerPairingCode is optional)
-        if (!body.userId) {
-            return Promise.resolve({status:400});
-        }
-
-        const request = body as AccountCreateRequest;
-
+    accountCreation(req: AccountCreateRequest): Promise<AccountCreateResponse> {
         // Locking to prevent race condition with webhook posted from Router Limits
         return this.lock.acquire(LockNames.WebhookFreeze, async () => {
             // Create the account in Router Limits
-            const accountId = await this.rl.createAccount(request.userId, request.routerPairingCode);
+            const accountId = await this.rl.createAccount(req.userId, req.routerPairingCode);
             const rlAccount = await this.rl.getAccount(accountId);
 
             if (!rlAccount.user) {
@@ -62,29 +63,23 @@ export class AccountsController implements IAccountsController {
             // Create API key for new account
             const apiKey = await this.apiKeys.generate(acctMapping);
 
-            const accountCreateResponse = {
+            return {
                 account: {
                     id: accountId,
                     active: false
                 },
                 apiKey: apiKey
             };
+        })
+    }
 
-            return {status: 201, body: accountCreateResponse};
-        });
-    };
-
-    accountGet: JsonRequestHandler = async (pathParams, queryParams, body, authLocals) => {
-        if (!authLocals || !authLocals.account || authLocals.account.id !== pathParams.accountId) {
-            return {status: 403};
-        }
-
+    async accountGet(account: Account) : Promise<ApiAccount> {
         // Get billing id of plan
-        const billingPlanId = await this.billing.get(authLocals.account.billingId);
+        const billingPlanId = await this.billing.get(account.billingId);
 
         // If no billing plan id set for the user, user is not subscribed
         if (!billingPlanId) {
-            return {status: 200, body: {id: authLocals.account.id, active: false}}
+            return {id: account.id, active: false}
         }
 
         // Get more information about the plan
@@ -93,24 +88,14 @@ export class AccountsController implements IAccountsController {
             throw new Error("Failed to find plan");
         }
 
-        return {status:200, body: {id: authLocals.account.id, active: true, plan: {id: plan.id, name: plan.name}}};
-    };
+        return {id: account.id, active: true, plan: {id: plan.id, name: plan.name}};
+    }
 
-    accountPaymentMethodCreation: JsonRequestHandler = async (pathParams, queryParams, body, authLocals) => {
-        if (!body.token) {
-            return {status: 400};
-        }
-        const req = body as PaymentMethodCreateRequest;
-
-        if (!authLocals || !authLocals.account || authLocals.account.id !== pathParams.accountId) {
-            return {status: 403};
-        }
-        const accountInfo = authLocals.account as Account;
-
+    async accountPaymentMethodCreation(accountInfo: Account, req : PaymentMethodCreateRequest) : Promise<PaymentMethod> {
         const result = await this.billing.createPaymentMethod(accountInfo.billingId, req.token);
         await this.billing.setDefaultPaymentMethod(accountInfo.billingId, result.id);
-        return {status: 201, body : result};
-    };
+        return result;
+    }
 
     accountPaymentMethodDelete: JsonRequestHandler = async (pathParams, queryParams, body, authLocals) => {
         if (!pathParams.accountId || !pathParams.methodId) {
@@ -135,69 +120,21 @@ export class AccountsController implements IAccountsController {
         }
         const accountInfo = authLocals.account as Account;
 
-        await this.billing.setDefaultPaymentMethod(accountInfo.billingId, pathParams.methodId)
+        await this.billing.setDefaultPaymentMethod(accountInfo.billingId, pathParams.methodId);
         return {status:204};
     };
 
-    accountPaymentMethodsList: JsonRequestHandler = async (pathParams, queryParams, body, authLocals) => {
-        if (!authLocals || !authLocals.account || authLocals.account.id !== pathParams.accountId) {
-            return {status: 403};
-        }
-        const accountInfo = authLocals.account as Account;
+    async accountPaymentMethodsList(accountInfo: Account) : Promise<PaymentMethod[]> {
+        return await this.billing.getPaymentMethods(accountInfo.billingId);
+    }
 
-        // TODO implement pagination as specified in api docs
-        const methods = await this.billing.getPaymentMethods(accountInfo.billingId);
-        return {
-            status:200,
-            body: {
-                hasMore: false,
-                lastEvaluatedKey: methods.length ? methods[methods.length - 1].id : undefined,
-                data : methods
-        }};
-    };
-
-    accountUpdate: JsonRequestHandler = async (pathParams, queryParams, body, authLocals) => {
-        if (!authLocals || !authLocals.account || authLocals.account.id !== pathParams.accountId) {
-            return {status: 403};
-        }
-        const accountInfo = authLocals.account as Account;
-
-        // Validate request
-        const ajv = new Ajv();
-        const valid = ajv.validate(
-            {
-                type: "object",
-                oneOf: [
-                    {
-                        properties: {
-                            active: {enum: [false]}
-                        },
-                        required: ['active'],
-                        additionalProperties: false
-                    },
-                    {
-                        properties: {
-                            active: {enum: [true]},
-                            planId: {type: 'string', minLength: 1}
-                        },
-                        additionalProperties: false
-                    }
-                ]
-            },
-            body
-        );
-        if (!valid) {
-            return {status: 400, body: "Invalid body"};
-        }
-
-        const req : AccountUpdateRequest = body as AccountUpdateRequest;
-
+    async accountUpdate(accountInfo: Account, req : AccountUpdateRequest) : Promise<void> {
         // Cancel in our billing system and in Router Limits.
         if (req.active === false) {
             return this.lock.acquire(LockNames.WebhookFreeze, async() => {
                 await this.billing.cancel(accountInfo.billingId);
                 await this.rl.cancel(accountInfo.id);
-                return {status:204};
+                return;
             })
         }
         // Subscribe to specific plan
@@ -217,7 +154,7 @@ export class AccountsController implements IAccountsController {
                 // Now we can make the same change in RL API
                 await this.rl.subscribe(accountInfo.id, <string>req.planId);
 
-                return {status: 204};
+                return;
             })
         }
         else if (req.active === true) {
@@ -226,15 +163,11 @@ export class AccountsController implements IAccountsController {
             // Activate the account in RL without specifying a plan. RL will subscribe the account to the default plan
             // and call us with a webhook if there is a change
             await this.rl.activate(accountInfo.id);
-            return {status: 204};
+            return;
         }
         else {
             // Nothing to do. You're welcome
-            return {status: 204};
+            return;
         }
-    };
+    }
 }
-
-type AccountCreateRequest = {userId: string, routerPairingCode?: string};
-type AccountUpdateRequest = {active?: boolean, planId?: string};
-type PaymentMethodCreateRequest = {token: string, setDefault? : boolean};

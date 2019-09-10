@@ -6,7 +6,9 @@ const c : Configuration = {
         listenPort: 8080,
 
         // Number of seconds an API key should last before expiring
-        apiKeyTtl: 3600
+        apiKeyTtl: 3600,
+
+        allowedOrigins: ['http://127.0.0.1']
     },
 
     // A mapping of Router Limits plan ids to the plan ids used in Stripe (or your billing system)

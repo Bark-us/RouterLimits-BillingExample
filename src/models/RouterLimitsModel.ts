@@ -3,12 +3,14 @@ import {AccountApi, AccountApiApiKeys} from "../routerlimits/api/api/accountApi"
 import {InlineObject} from "../routerlimits/api/model/inlineObject";
 import {AccountsListResponse} from "../routerlimits/api/model/accountsListResponse";
 import {InlineObject4} from "../routerlimits/api/model/inlineObject4";
+import {AccountSubscriptionsListResponse} from "../routerlimits/api/model/accountSubscriptionsListResponse";
 
 export interface IRouterLimitsModel {
     activate(accountId: string) : Promise<void>;
     cancel(accountId: string) : Promise<void>;
     createAccount(userId: string, routerPairingCode?: string) : Promise<string>;
     getAccount(accountId: string) : Promise<AccountsListResponse>;
+    getSubscriptions(accountId: string) : Promise<AccountSubscriptionsListResponse[]>;
     subscribe(accountId: string, planId: string) : Promise<void>;
 }
 
@@ -25,6 +27,10 @@ export class MockRouterLimitsModel implements IRouterLimitsModel {
 
     async getAccount(accountId: string): Promise<AccountsListResponse> {
         return new AccountsListResponse();
+    }
+
+    async getSubscriptions(accountId: string) : Promise<AccountSubscriptionsListResponse[]> {
+        return [];
     }
 
     async subscribe(accountId: string, planId: string) : Promise<void> {
@@ -59,6 +65,10 @@ export class RouterLimitsModel implements IRouterLimitsModel {
     async getAccount(accountId: string): Promise<AccountsListResponse> {
         const result = await this.getApi().accountsAccountIdGet(accountId);
         return result.body;
+    }
+
+    async getSubscriptions(accountId: string) : Promise<AccountSubscriptionsListResponse[]> {
+        return (await this.getApi().accountsAccountIdSubscriptionsGet(accountId)).body;
     }
 
     async subscribe(accountId: string, planId: string): Promise<void> {

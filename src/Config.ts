@@ -4,6 +4,7 @@ export interface Configuration {
     api : {
         listenPort : number;
         apiKeyTtl : number;
+        allowedOrigins: Array<string> | "*";
     }
 
     // Maps Router Limits plan ids to Stripe plan ids

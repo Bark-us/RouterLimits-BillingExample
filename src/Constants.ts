@@ -1,3 +1,3 @@
 export enum LockNames {
-    CreateCustomerCreateAccount = "createCustomer-create"
+    WebhookFreeze = "webhookFreeze"
 }

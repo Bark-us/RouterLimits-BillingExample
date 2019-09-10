@@ -22,10 +22,10 @@ export interface IBillingModel {
 
     /**
      * Subscribe a customer to the specified plan
-     * @param id the customer's id
-     * @param planId the plan's billing id
+     * @param billingId the customer's id
+     * @param planBillingId the plan's billing id
      */
-    subscribe(id : string, planId : string) : Promise<void>;
+    subscribe(billingId : string, planBillingId : string) : Promise<void>;
 }
 
 export class MockBillingModel implements IBillingModel {

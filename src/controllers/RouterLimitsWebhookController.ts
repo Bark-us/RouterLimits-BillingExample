@@ -27,7 +27,7 @@ export class RouterLimitsWebhookController implements IRouterLimitsWebhookContro
     }
 
     handleAccountCreated(timestamp: number, accountId: string, firstName: string, lastName: string, email: string): Promise<void> {
-        return this.lock.acquire(LockNames.CreateCustomerCreateAccount, async () => {
+        return this.lock.acquire(LockNames.WebhookFreeze, async () => {
             const account = await this.accounts.get(accountId);
 
             // No work to do if account already exists
@@ -44,34 +44,38 @@ export class RouterLimitsWebhookController implements IRouterLimitsWebhookContro
     }
 
     handleAccountSubscriptionCancel(timestamp: number, accountId: string): Promise<void> {
-        // Lookup billing customer
-        return this.accounts.get(accountId)
-            .then((account) => {
-                if (!account) {
-                    return Promise.reject(new Error("No such account is known"));
-                }
+        return this.lock.acquire(LockNames.WebhookFreeze, () => {
+            // Lookup billing customer
+            return this.accounts.get(accountId)
+                .then((account) => {
+                    if (!account) {
+                        return Promise.reject(new Error("No such account is known"));
+                    }
 
-                // Cancel subscription in billing system
-                return this.billing.cancel(account.billingId);
-            })
+                    // Cancel subscription in billing system
+                    return this.billing.cancel(account.billingId);
+                })
+        })
     }
 
     handleAccountSubscriptionChange(timestamp: number, accountId: string, planId: string): Promise<void> {
-        // Lookup billing customer
-        // Lookup mapping of router limits plan to billing plan
-        return Promise.all([
-            this.accounts.get(accountId),
-            this.plans.get(planId)
-        ]).then((results) => {
-            if (!results[0]) {
-                return Promise.reject(new Error("No such account is known"));
-            }
+        return this.lock.acquire(LockNames.WebhookFreeze, () => {
+            // Lookup billing customer
+            // Lookup mapping of router limits plan to billing plan
+            return Promise.all([
+                this.accounts.get(accountId),
+                this.plans.get(planId)
+            ]).then((results) => {
+                if (!results[0]) {
+                    return Promise.reject(new Error("No such account is known"));
+                }
 
-            if (!results[1]) {
-                return Promise.reject(new Error("No such plan is known"));
-            }
-            // Subscribe billing customer to appropriate plan
-            return this.billing.subscribe(results[0].billingId, results[1].billingId)
+                if (!results[1]) {
+                    return Promise.reject(new Error("No such plan is known"));
+                }
+                // Subscribe billing customer to appropriate plan
+                return this.billing.subscribe(results[0].billingId, results[1].billingId)
+            })
         })
     }
 

@@ -2,19 +2,32 @@ import {Configuration} from "../Config";
 import {AccountApi, AccountApiApiKeys} from "../routerlimits/api/api/accountApi";
 import {InlineObject} from "../routerlimits/api/model/inlineObject";
 import {AccountsListResponse} from "../routerlimits/api/model/accountsListResponse";
+import {InlineObject4} from "../routerlimits/api/model/inlineObject4";
 
 export interface IRouterLimitsModel {
+    activate(accountId: string) : Promise<void>;
+    cancel(accountId: string) : Promise<void>;
     createAccount(userId: string, routerPairingCode?: string) : Promise<string>;
     getAccount(accountId: string) : Promise<AccountsListResponse>;
+    subscribe(accountId: string, planId: string) : Promise<void>;
 }
 
 export class MockRouterLimitsModel implements IRouterLimitsModel {
+    async activate(accountId: string): Promise<void> {
+    }
+
+    async cancel(accountId: string): Promise<void> {
+    }
+
     async createAccount(userId: string, routerPairingCode?: string): Promise<string> {
         return "5";
     }
 
     async getAccount(accountId: string): Promise<AccountsListResponse> {
         return new AccountsListResponse();
+    }
+
+    async subscribe(accountId: string, planId: string) : Promise<void> {
     }
 }
 
@@ -23,6 +36,14 @@ export class RouterLimitsModel implements IRouterLimitsModel {
 
     constructor(config: Configuration) {
         this.config = config;
+    }
+
+    async activate(accountId: string): Promise<void> {
+        await this.getApi().accountsAccountIdReactivatePost(accountId);
+    }
+
+    async cancel(accountId: string): Promise<void> {
+        await this.getApi().accountsAccountIdCancelPost(accountId);
     }
 
     async createAccount(userId: string, routerPairingCode?: string): Promise<string> {
@@ -38,6 +59,12 @@ export class RouterLimitsModel implements IRouterLimitsModel {
     async getAccount(accountId: string): Promise<AccountsListResponse> {
         const result = await this.getApi().accountsAccountIdGet(accountId);
         return result.body;
+    }
+
+    async subscribe(accountId: string, planId: string): Promise<void> {
+        const req = new InlineObject4();
+        req.planId = planId;
+        await this.getApi().accountsAccountIdSubscriptionsPost(accountId, req);
     }
 
     private getApi() : AccountApi {

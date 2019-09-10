@@ -100,8 +100,17 @@ export class AccountsController implements IAccountsController {
         return {status: 501};
     };
 
-    accountPaymentMethodDelete: JsonRequestHandler = (pathParams, queryParams, body) => {
-        return Promise.resolve({status:501});
+    accountPaymentMethodDelete: JsonRequestHandler = async (pathParams, queryParams, body, authLocals) => {
+        if (!pathParams.accountId || !pathParams.methodId) {
+            return {status: 400, body: "Bad request"};
+        }
+
+        if (!authLocals || !authLocals.account || authLocals.account.id !== pathParams.accountId) {
+            return {status: 403};
+        }
+        const accountInfo = authLocals.account as Account;
+        await this.billing.deletePaymentMethod(accountInfo.billingId, pathParams.methodId);
+        return {status: 204};
     };
 
     accountPaymentMethodSetDefault: JsonRequestHandler = async (pathParams, queryParams, body, authLocals) => {

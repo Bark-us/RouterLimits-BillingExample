@@ -15,6 +15,8 @@ export interface IBillingModel {
      */
     createCustomer(firstName: string, lastName: string, email: string) : Promise<string>;
 
+    deletePaymentMethod(billingId: string, methodId: string) : Promise<void>;
+
     /**
      * Retrieve the billing plan id that a customer is subscribed to
      * @param id
@@ -56,6 +58,9 @@ export class MockBillingModel implements IBillingModel {
         const id : string = `${this.nextId++}`;
         this.customers.set(id, {planId : null});
         return Promise.resolve(id);
+    }
+
+    async deletePaymentMethod(billingId: string, methodId: string) : Promise<void> {
     }
 
     get(id: string) : Promise<string | null> {
@@ -116,6 +121,10 @@ export class StripeBillingModel implements IBillingModel {
         return this.stripe.customers.create({name : `${firstName} ${lastName}`, email: email}).then((customer) => {
             return Promise.resolve(customer.id);
         })
+    }
+
+    async deletePaymentMethod(billingId: string, methodId: string) : Promise<void> {
+        await this.stripe.customers.deleteSource(billingId, methodId);
     }
 
     get(id: string): Promise<string | null> {

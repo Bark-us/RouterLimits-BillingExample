@@ -87,10 +87,11 @@ describe("Router Limits Webhooks", () => {
             billing = new MockBillingModel();
             rl = new MockRouterLimitsModel();
             plans = new PlansModel(config.planMap);
+            const lock = new AsyncLock();
 
-            billingController = new BillingWebhookController(config, accounts);
+            billingController = new BillingWebhookController(config, accounts, lock);
             authController = new AuthenticationController(config, accounts, apiKeys);
-            accountsController = new AccountsController(billing, accounts, apiKeys, rl, new AsyncLock());
+            accountsController = new AccountsController(billing, accounts, apiKeys, rl, plans, lock);
             processor = new MockRouterLimitsWebhookController();
             const plansController = new PlansController(plans);
 

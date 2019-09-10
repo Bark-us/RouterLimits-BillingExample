@@ -15,6 +15,8 @@ export interface IBillingModel {
      */
     createCustomer(firstName: string, lastName: string, email: string) : Promise<string>;
 
+    createPaymentMethod(billingId: string, token: string) : Promise<PaymentMethod>;
+
     deletePaymentMethod(billingId: string, methodId: string) : Promise<void>;
 
     /**
@@ -58,6 +60,11 @@ export class MockBillingModel implements IBillingModel {
         const id : string = `${this.nextId++}`;
         this.customers.set(id, {planId : null});
         return Promise.resolve(id);
+    }
+
+    // @ts-ignore
+    createPaymentMethod(billingId: string, token: string) : Promise<PaymentMethod> {
+        throw new Error("Not implemented");
     }
 
     async deletePaymentMethod(billingId: string, methodId: string) : Promise<void> {
@@ -121,6 +128,22 @@ export class StripeBillingModel implements IBillingModel {
         return this.stripe.customers.create({name : `${firstName} ${lastName}`, email: email}).then((customer) => {
             return Promise.resolve(customer.id);
         })
+    }
+
+    async createPaymentMethod(billingId: string, token: string) : Promise<PaymentMethod> {
+        const source = await this.stripe.customers.createSource(billingId, {source:token});
+        const card = source as Stripe.ICard;
+        const customer = await this.stripe.customers.retrieve(billingId);
+        return {
+            id: source.id,
+            isDefault: source.id === customer.default_source,
+            cardInfo: {
+                brand: card.brand,
+                expMonth: card.exp_month,
+                expYear: card.exp_year,
+                last4: card.last4
+            }
+        }
     }
 
     async deletePaymentMethod(billingId: string, methodId: string) : Promise<void> {

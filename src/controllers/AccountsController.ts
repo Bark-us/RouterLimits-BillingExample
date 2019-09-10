@@ -97,7 +97,19 @@ export class AccountsController implements IAccountsController {
     };
 
     accountPaymentMethodCreation: JsonRequestHandler = async (pathParams, queryParams, body, authLocals) => {
-        return {status: 501};
+        if (!body.token) {
+            return {status: 400};
+        }
+        const req = body as PaymentMethodCreateRequest;
+
+        if (!authLocals || !authLocals.account || authLocals.account.id !== pathParams.accountId) {
+            return {status: 403};
+        }
+        const accountInfo = authLocals.account as Account;
+
+        const result = await this.billing.createPaymentMethod(accountInfo.billingId, req.token);
+        await this.billing.setDefaultPaymentMethod(accountInfo.billingId, result.id);
+        return {status: 201, body : result};
     };
 
     accountPaymentMethodDelete: JsonRequestHandler = async (pathParams, queryParams, body, authLocals) => {
@@ -225,3 +237,4 @@ export class AccountsController implements IAccountsController {
 
 type AccountCreateRequest = {userId: string, routerPairingCode?: string};
 type AccountUpdateRequest = {active?: boolean, planId?: string};
+type PaymentMethodCreateRequest = {token: string, setDefault? : boolean};

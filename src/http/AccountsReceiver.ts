@@ -31,7 +31,14 @@ export class AccountsReceiver {
             return;
         }
 
-        const result = await this.c.accountCreation(req.body);
+        let result;
+        try {
+            result = await this.c.accountCreation(req.body);
+        } catch(e) {
+            res.sendStatus(500);
+            return;
+        }
+
         res.status(201);
         res.json(result);
     };
@@ -42,7 +49,14 @@ export class AccountsReceiver {
             return;
         }
 
-        const result = await this.c.accountGet(res.locals.account);
+        let result;
+        try {
+            result = await this.c.accountGet(res.locals.account);
+        } catch(e) {
+            res.sendStatus(500);
+            return;
+        }
+
         res.status(200);
         res.json(result);
     };
@@ -84,7 +98,13 @@ export class AccountsReceiver {
         }
 
         const request : AccountUpdateRequest = req.body as AccountUpdateRequest;
-        await this.c.accountUpdate(accountInfo, request);
+        try {
+            await this.c.accountUpdate(accountInfo, request);
+        } catch(e) {
+            res.sendStatus(500);
+            return;
+        }
+
         res.sendStatus(204);
     };
 
@@ -95,7 +115,14 @@ export class AccountsReceiver {
         }
         const accountInfo = res.locals.account as Account;
 
-        const methods = await this.c.accountPaymentMethodsList(accountInfo);
+        let methods;
+        try {
+            methods = await this.c.accountPaymentMethodsList(accountInfo);
+        } catch(e) {
+            res.sendStatus(500);
+            return;
+        }
+
         // TODO implement pagination as specified in api docs
         res.status(200);
         res.json({
@@ -117,8 +144,16 @@ export class AccountsReceiver {
             res.sendStatus(403);
             return;
         }
+
         const accountInfo = res.locals.account as Account;
-        const result = await this.c.accountPaymentMethodCreation(accountInfo, request);
+        let result;
+        try {
+            result = await this.c.accountPaymentMethodCreation(accountInfo, request);
+        } catch(e) {
+            res.sendStatus(500);
+            return;
+        }
+
         res.status(201);
         res.json(result);
     };
@@ -128,8 +163,16 @@ export class AccountsReceiver {
             res.sendStatus(403);
             return;
         }
+
         const accountInfo = res.locals.account as Account;
-        await this.c.accountPaymentMethodDelete(accountInfo, req.params.methodId);
+
+        try {
+            await this.c.accountPaymentMethodDelete(accountInfo, req.params.methodId);
+        } catch(e) {
+            res.sendStatus(500);
+            return;
+        }
+
         res.sendStatus(204);
     };
 
@@ -139,7 +182,12 @@ export class AccountsReceiver {
             return;
         }
         const accountInfo = res.locals.account as Account;
-        await this.c.accountPaymentMethodSetDefault(accountInfo, req.params.methodId);
+        try {
+            await this.c.accountPaymentMethodSetDefault(accountInfo, req.params.methodId);
+        } catch(e) {
+            res.sendStatus(500);
+            return;
+        }
         res.sendStatus(204);
     }
 }

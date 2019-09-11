@@ -122,7 +122,25 @@ export class ApiServer {
             .options(corsWrangler);
 
         // Plans
-        this.expressApp.get('/api/plans', new JsonReceiver(plansController.plansList).process);
+        this.expressApp.get('/api/plans', async (req: Request, res: Response) => {
+            let plans;
+            try {
+                plans = await plansController.plansList(req.query.startKey, req.query.limit);
+            } catch (e) {
+                res.sendStatus(500);
+                return;
+            }
+
+            res.status(200);
+            res.json({
+                status: 200,
+                body : {
+                    hasMore: false,
+                    lastEvaluatedKey: plans.length ? plans[plans.length - 1].id : undefined,
+                    data : plans
+                }
+            });
+        });
 
         this.server = this.expressApp.listen(config.api.listenPort);
     }

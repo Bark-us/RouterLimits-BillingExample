@@ -121,5 +121,25 @@ export class AccountsReceiver {
         const result = await this.c.accountPaymentMethodCreation(accountInfo, request);
         res.status(201);
         res.json(result);
+    };
+
+    acctDeletePaymentMethod = async (req: Request, res: Response) => {
+        if (!res.locals || !res.locals.account || res.locals.account.id !== req.params.accountId) {
+            res.sendStatus(403);
+            return;
+        }
+        const accountInfo = res.locals.account as Account;
+        await this.c.accountPaymentMethodDelete(accountInfo, req.params.methodId);
+        res.sendStatus(204);
+    };
+
+    acctSetDefaultPaymentMethod = async (req: Request, res: Response) => {
+        if (!res.locals || !res.locals.account || res.locals.account.id !== req.params.accountId) {
+            res.sendStatus(403);
+            return;
+        }
+        const accountInfo = res.locals.account as Account;
+        await this.c.accountPaymentMethodSetDefault(accountInfo, req.params.methodId);
+        res.sendStatus(204);
     }
 }

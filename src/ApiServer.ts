@@ -115,10 +115,10 @@ export class ApiServer {
             .post(corsWrangler, accountAuthHelper,jsonParser, accountsReceiver.acctCreatePaymentMethod)
             .options(corsWrangler);
         this.expressApp.route('/api/accounts/:accountId/paymentMethods/:methodId')
-            .delete(accountAuthHelper, jsonParser, new JsonReceiver(accountsController.accountPaymentMethodDelete).process)
+            .delete(accountAuthHelper, jsonParser, accountsReceiver.acctDeletePaymentMethod)
             .options(corsWrangler);
         this.expressApp.route('/api/accounts/:accountId/paymentMethods/:methodId/setDefault')
-            .post(corsWrangler, accountAuthHelper, jsonParser, new JsonReceiver(accountsController.accountPaymentMethodSetDefault).process)
+            .post(corsWrangler, accountAuthHelper, jsonParser, accountsReceiver.acctSetDefaultPaymentMethod)
             .options(corsWrangler);
 
         // Plans

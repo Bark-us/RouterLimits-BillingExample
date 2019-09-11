@@ -1,5 +1,4 @@
 import AsyncLock from 'async-lock';
-import {JsonRequestHandler} from "../http/JsonReceiver";
 import {IBillingModel} from "../models/BillingModel";
 import {Account, IAccountsModel} from "../models/AccountsModel";
 import {IApiKeysModel} from "../models/ApiKeysModel";
@@ -21,9 +20,8 @@ export interface IAccountsController {
     accountUpdate(accountInfo: Account, req : AccountUpdateRequest) : Promise<void>;
     accountPaymentMethodsList(accountInfo: Account) : Promise<PaymentMethod[]>;
     accountPaymentMethodCreation(accountInfo: Account, req : PaymentMethodCreateRequest) : Promise<PaymentMethod>;
-    // accountPaymentMethodCreation : JsonRequestHandler;
-    accountPaymentMethodDelete : JsonRequestHandler;
-    accountPaymentMethodSetDefault : JsonRequestHandler;
+    accountPaymentMethodDelete(accountInfo: Account, methodId: string) : Promise<void>;
+    accountPaymentMethodSetDefault(accountInfo: Account, methodId: string) : Promise<void>;
 }
 
 export class AccountsController implements IAccountsController {
@@ -97,32 +95,13 @@ export class AccountsController implements IAccountsController {
         return result;
     }
 
-    accountPaymentMethodDelete: JsonRequestHandler = async (pathParams, queryParams, body, authLocals) => {
-        if (!pathParams.accountId || !pathParams.methodId) {
-            return {status: 400, body: "Bad request"};
-        }
+    async accountPaymentMethodDelete(accountInfo: Account, methodId: string) : Promise<void> {
+        await this.billing.deletePaymentMethod(accountInfo.billingId, methodId);
+    }
 
-        if (!authLocals || !authLocals.account || authLocals.account.id !== pathParams.accountId) {
-            return {status: 403};
-        }
-        const accountInfo = authLocals.account as Account;
-        await this.billing.deletePaymentMethod(accountInfo.billingId, pathParams.methodId);
-        return {status: 204};
-    };
-
-    accountPaymentMethodSetDefault: JsonRequestHandler = async (pathParams, queryParams, body, authLocals) => {
-        if (!pathParams.accountId || !pathParams.methodId) {
-            return {status: 400, body: "Bad request"};
-        }
-
-        if (!authLocals || !authLocals.account || authLocals.account.id !== pathParams.accountId) {
-            return {status: 403};
-        }
-        const accountInfo = authLocals.account as Account;
-
-        await this.billing.setDefaultPaymentMethod(accountInfo.billingId, pathParams.methodId);
-        return {status:204};
-    };
+    async accountPaymentMethodSetDefault(accountInfo: Account, methodId: string) : Promise<void> {
+        await this.billing.setDefaultPaymentMethod(accountInfo.billingId, methodId);
+    }
 
     async accountPaymentMethodsList(accountInfo: Account) : Promise<PaymentMethod[]> {
         return await this.billing.getPaymentMethods(accountInfo.billingId);

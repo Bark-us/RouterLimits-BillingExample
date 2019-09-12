@@ -7,12 +7,12 @@ import {StripeWebhookReceiver} from "./http/StripeWebhookReceiver";
 import {Configuration} from "Config";
 import {IRouterLimitsWebhookController} from "./controllers/RouterLimitsWebhookController";
 import {IBillingWebhookController} from "./controllers/BillingWebhookController";
-import {JsonReceiver} from "./http/JsonReceiver";
 import {IAuthenticationController} from "./controllers/AuthenticationController";
 import {IAccountsController} from "./controllers/AccountsController";
 import {Request, Response} from "express";
 import {IPlansController} from "./controllers/PlansController";
 import {AccountsReceiver} from "./http/AccountsReceiver";
+import {AuthenticationReceiver} from "http/AuthenticationReceiver";
 
 export class ApiServer {
     get listenPort() : number {
@@ -90,6 +90,7 @@ export class ApiServer {
         };
 
         const accountsReceiver = new AccountsReceiver(accountsController);
+        const authReceiver = new AuthenticationReceiver(authController);
 
         // Webhooks
         this.expressApp.post('/webhooks/routerlimits', greedyRawParser, new RouterLimitsWebhookReceiver(config, rlController).router);
@@ -97,7 +98,7 @@ export class ApiServer {
 
         // Authenticate via JWT
         this.expressApp.route('/api/authenticate')
-            .post(corsWrangler, jsonParser, new JsonReceiver(authController.handle).process)
+            .post(corsWrangler, jsonParser, authReceiver.authViaJwt)
             .options(corsWrangler);
 
         // Accounts

@@ -7,7 +7,7 @@ import {SQLiteAccountsModel} from "./models/AccountsModel";
 import {PlansModel} from "./models/PlansModel";
 import {BillingWebhookController, IBillingWebhookController} from "./controllers/BillingWebhookController";
 import {AuthenticationController, IAuthenticationController} from "./controllers/AuthenticationController";
-import {ApiKeysModel} from "./models/ApiKeysModel";
+import {SQLiteApiKeysModel} from "./models/ApiKeysModel";
 import {AccountsController} from "./controllers/AccountsController";
 import {RouterLimitsModel} from "./models/RouterLimitsModel";
 import AsyncLock from 'async-lock';
@@ -18,7 +18,7 @@ const c : Configuration = config.util.toObject();
 (async () => {
     const accounts = await SQLiteAccountsModel.createInstance("AccountsDatabase.sqlite");
     const billing = new StripeBillingModel(c);
-    const apiKeys = new ApiKeysModel(c.api.apiKeyTtl);
+    const apiKeys = await SQLiteApiKeysModel.createInstance("ApiKeysDatabase.sqlite", c.api.apiKeyTtl);
     const rl = new RouterLimitsModel(c);
     const plans = new PlansModel(c.planMap);
 

@@ -1,4 +1,3 @@
-import {JsonRequestHandler, JsonType} from "../http/JsonReceiver";
 import {Configuration} from "../Config";
 import * as jwt from 'jwt-simple';
 import Ajv from 'ajv';
@@ -7,9 +6,17 @@ import {ExpireSet} from "../ExpireSet";
 import {IApiKeysModel} from "../models/ApiKeysModel";
 
 export interface IAuthenticationController {
-    handle : JsonRequestHandler;
-    validateApiKey: (apiKey:string) => Promise<Account | undefined>;
+    handle(token : string) : Promise<AuthResponse>;
+    validateApiKey(apiKey: string) : Promise<Account | undefined>;
 }
+
+export enum AuthResult {
+    INVALID,
+    DENIED,
+    SUCCESS
+}
+export type AuthResponse = {result: AuthResult.DENIED | AuthResult.INVALID, message: string} | {result: AuthResult.SUCCESS, body: AuthResponseBody};
+export type AuthResponseBody = {apiKey: string, accountId: string};
 
 export class AuthenticationController implements IAuthenticationController {
     private readonly config : Configuration;
@@ -24,16 +31,14 @@ export class AuthenticationController implements IAuthenticationController {
         this.usedIds = new ExpireSet<string>(config.routerlimits.webhookValidInterval);
     }
 
-    public readonly handle : JsonRequestHandler = (pathParams, queryParams, body) => {
-        if (!body.jwt) {
-            return Promise.resolve({status: 400});
-        }
+    async handle(token: string) : Promise<AuthResponse> {
 
+        // Decode the token
         let decoded : DecodedJWT;
         try {
-            decoded = jwt.decode(body.jwt, this.config.routerlimits.sharedSecret, false, 'HS256');
+            decoded = jwt.decode(token, this.config.routerlimits.sharedSecret, false, 'HS256');
         } catch (e) {
-            return Promise.resolve({status: 400, body: "Invalid token or signature"});
+            return {result:AuthResult.INVALID, message: "Invalid token or signature"};
         }
 
         // Validate token format
@@ -53,36 +58,38 @@ export class AuthenticationController implements IAuthenticationController {
             decoded
         );
         if (!valid) {
-            return Promise.resolve({status: 400, body: "Invalid decoded token format"});
+            return {result: AuthResult.INVALID, message: "Invalid decoded token format"};
         }
 
         // Make sure timestamp is valid
         const now = +new Date() / 1000 | 0;
         if (Math.abs(now - decoded.iat) > this.config.routerlimits.jwtValidInterval) {
-            return Promise.resolve({status: 401, body: "Expired token"});
+            return {result: AuthResult.DENIED, message: "Expired token"};
         }
 
         // Make sure we haven't seen token before
         if (this.usedIds.has(decoded.jti)) {
-            return Promise.resolve({status: 401, body: "Replayed token"});
+            return {result: AuthResult.DENIED, message: "Replayed token"};
         }
         this.usedIds.insert(decoded.jti);
 
         // Do we have a matching account?
-        return this.accounts.get(decoded.aid).then((acct): Promise<{body? : JsonType, status? : number, headers? : object}> => {
-            if (!acct) {
-                return Promise.resolve({status: 401, body: "No such account"});
-            }
+        const acct = await this.accounts.get(decoded.aid);
+        if (!acct) {
+            return {result: AuthResult.DENIED, message: "No such account"};
+        }
 
-            // Generate API key
-            return this.apikeys.generate(acct).then((apiKey) => {
-                return Promise.resolve({status: 200, body: {apiKey: apiKey, accountId: acct.id}});
-            });
-        })
-    };
+        // Generate Api key
+        const apiKey = await this.apikeys.generate(acct.id);
+        return {result: AuthResult.SUCCESS, body: {apiKey: apiKey, accountId: acct.id}};
+    }
 
-    public readonly validateApiKey = (apiKey: string): Promise<Account | undefined> => {
-        return Promise.resolve(this.apikeys.getInfoByKey(apiKey));
+    async validateApiKey(apiKey: string): Promise<Account | undefined> {
+        const accountId = await this.apikeys.getAccountIdByKey(apiKey);
+        if (!accountId)
+            return undefined;
+
+        return await this.accounts.get(accountId);
     }
 }
 

@@ -59,7 +59,7 @@ export class AccountsController implements IAccountsController {
             const acctMapping = await this.accounts.create(accountId, billingId);
 
             // Create API key for new account
-            const apiKey = await this.apiKeys.generate(acctMapping);
+            const apiKey = await this.apiKeys.generate(acctMapping.id);
 
             return {
                 account: {

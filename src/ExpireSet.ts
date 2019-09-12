@@ -86,6 +86,11 @@ export class ExpireMap<K, V> {
 
         this.cur.set(key, new ExpireMapContainer<V>(value, now + this.ttl));
     }
+
+    remove(key: K) {
+        this.cur.delete(key);
+        this.prev.delete(key);
+    }
 }
 
 class ExpireMapContainer<V> {

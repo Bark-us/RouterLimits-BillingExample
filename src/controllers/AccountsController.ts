@@ -128,10 +128,9 @@ export class AccountsController implements IAccountsController {
                 return;
             })
         }
-        // Subscribe to specific plan
-        else if (req.planId) {
+        else {
             // Learn the billing id of the plan
-            const planInfo = await this.plans.get(req.planId);
+            const planInfo = req.planId ? await this.plans.get(req.planId) : await this.plans.getDefault();
             if (!planInfo) {
                 throw new Error("Failed to find plan");
             }
@@ -147,18 +146,6 @@ export class AccountsController implements IAccountsController {
 
                 return;
             })
-        }
-        else if (req.active === true) {
-            // TODO if default plan will require payment, may want to check for payment method availability first
-
-            // Activate the account in RL without specifying a plan. RL will subscribe the account to the default plan
-            // and call us with a webhook if there is a change
-            await this.rl.activate(accountInfo.id);
-            return;
-        }
-        else {
-            // Nothing to do. You're welcome
-            return;
         }
     }
 

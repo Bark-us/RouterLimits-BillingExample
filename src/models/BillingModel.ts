@@ -39,7 +39,7 @@ export interface IBillingModel {
 }
 
 export class MockBillingModel implements IBillingModel {
-    private readonly customers : Map<string, {planId : string | null}>;
+    private readonly customers : Map<string, {planId : string | null, paymentMethods: Array<PaymentMethod>}>;
     private nextId : number;
 
     constructor() {
@@ -59,16 +59,28 @@ export class MockBillingModel implements IBillingModel {
 
     createCustomer(firstName: string, lastName: string, email: string): Promise<string> {
         const id : string = `${this.nextId++}`;
-        this.customers.set(id, {planId : null});
+        this.customers.set(id, {planId : null, paymentMethods: []});
         return Promise.resolve(id);
     }
 
-    // @ts-ignore
-    createPaymentMethod(billingId: string, token: string) : Promise<PaymentMethod> {
-        throw new Error("Not implemented");
+    async createPaymentMethod(billingId: string, token: string) : Promise<PaymentMethod> {
+        const cust = this.customers.get(billingId);
+        if (!cust) {
+            throw new Error("No such customer");
+        }
+
+        const method = {id: `card_${token}`, cardInfo: {brand: "Schmisa", expMonth: 5, expYear: 99, last4: "1234"}, isDefault: cust.paymentMethods.length <= 0};
+        cust.paymentMethods.push(method);
+        return method;
     }
 
     async deletePaymentMethod(billingId: string, methodId: string) : Promise<void> {
+        const cust = this.customers.get(billingId);
+        if (!cust) {
+            throw new Error("No such customer");
+        }
+
+        cust.paymentMethods = cust.paymentMethods.filter((m) => {return m.id !== methodId});
     }
 
     get(id: string) : Promise<string | null> {
@@ -81,10 +93,22 @@ export class MockBillingModel implements IBillingModel {
     }
 
     async getPaymentMethods(billingId: string): Promise<Array<PaymentMethod>> {
-        return [];
+        const c = this.customers.get(billingId);
+        if (!c) {
+            return Promise.reject(new Error("No such billing customer"));
+        }
+        return c.paymentMethods;
     }
 
     async setDefaultPaymentMethod(billingId: string, methodId: string): Promise<void> {
+        const c = this.customers.get(billingId);
+        if (!c) {
+            return Promise.reject(new Error("No such billing customer"));
+        }
+
+        for (const method of c.paymentMethods) {
+            method.isDefault = method.id === methodId;
+        }
     }
 
     subscribe(id: string, planId: string): Promise<void> {

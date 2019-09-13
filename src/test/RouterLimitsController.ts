@@ -10,7 +10,7 @@ describe("RouterLimitsWebhookController", () => {
     describe("Unit tests", () => {
         const planId = "rlp1";
         const billingPlanId = "bp1";
-        const fakePlans = [{id : planId, billingId: billingPlanId, name: "Cat's Pajamas"}];
+        const fakePlans = [{id : planId, billingId: billingPlanId, name: "Cat's Pajamas", default: true}];
 
         const accountId = "czxslkmdsac";
         const testFirstName = "Test";

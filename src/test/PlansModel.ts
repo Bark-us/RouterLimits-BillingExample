@@ -7,7 +7,7 @@ describe("PlansModel", () => {
        const name = "Plan A";
        const billingId = "b_a";
 
-       const plans : IPlansModel = new PlansModel([{id, name, billingId}]);
+       const plans : IPlansModel = new PlansModel([{id, name, billingId, default:true}]);
        let p = await plans.get("c");
        if (p) {
            throw new Error("Didn't expect plan to exist");

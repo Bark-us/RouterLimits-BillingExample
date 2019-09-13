@@ -76,7 +76,7 @@ describe("Router Limits Webhooks", () => {
 
         const config : Configuration = {
             api: {listenPort: 0, apiKeyTtl: 1, allowedOrigins: "*"},
-            planMap: [],
+            planMap: [{id: "plan9", name: "Out Space", default: true, billingId: "b_plan9"}],
             routerlimits: {apiKey: "", sharedSecret: "secretcats", webhookValidInterval: 1, jwtValidInterval: 1, organiztionId: ""},
             stripe: {publishableKey: "",secretKey: "", webhookSecret:"", webhookValidInterval: 300, apiVersion: "2017-06-05"}
         };

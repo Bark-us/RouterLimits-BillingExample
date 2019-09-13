@@ -15,6 +15,12 @@ export interface IRouterLimitsModel {
 }
 
 export class MockRouterLimitsModel implements IRouterLimitsModel {
+    private accounts : Map<string, {userId: string, accountId: string}>;
+
+    constructor() {
+        this.accounts = new Map();
+    }
+
     async activate(accountId: string): Promise<void> {
     }
 
@@ -22,11 +28,26 @@ export class MockRouterLimitsModel implements IRouterLimitsModel {
     }
 
     async createAccount(userId: string, routerPairingCode?: string): Promise<string> {
-        return "5";
+        const accountId = `acct_${userId}`;
+        if (this.accounts.has(accountId)) {
+            throw new Error("Account exists");
+        }
+
+        this.accounts.set(accountId, {userId: userId, accountId: accountId});
+        return accountId;
     }
 
     async getAccount(accountId: string): Promise<AccountsListResponse> {
-        return new AccountsListResponse();
+        const info = this.accounts.get(accountId);
+        if (!info) {
+            throw new Error("No such account");
+        }
+
+        const toRet = new AccountsListResponse();
+        toRet.id = info.accountId;
+        toRet.userId = info.userId;
+        toRet.user = {id: info.userId, firstName: "Test", lastName: "User", email: "email@example.net", phone: "1234567890", roles: []};
+        return toRet;
     }
 
     async getSubscriptions(accountId: string) : Promise<AccountSubscriptionsListResponse[]> {

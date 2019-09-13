@@ -16,12 +16,12 @@ import {
 
 export interface IAccountsController {
     accountCreation(req : AccountCreateRequest) : Promise<AccountCreateResponse>;
-    accountGet(account : Account) : Promise<ApiAccount>;
-    accountUpdate(accountInfo: Account, req : AccountUpdateRequest) : Promise<void>;
-    accountPaymentMethodsList(accountInfo: Account) : Promise<PaymentMethod[]>;
-    accountPaymentMethodCreation(accountInfo: Account, req : PaymentMethodCreateRequest) : Promise<PaymentMethod>;
-    accountPaymentMethodDelete(accountInfo: Account, methodId: string) : Promise<void>;
-    accountPaymentMethodSetDefault(accountInfo: Account, methodId: string) : Promise<void>;
+    accountGet(accountId : string) : Promise<ApiAccount>;
+    accountUpdate(accountId: string, req : AccountUpdateRequest) : Promise<void>;
+    accountPaymentMethodsList(accountId: string) : Promise<PaymentMethod[]>;
+    accountPaymentMethodCreation(accountId: string, req : PaymentMethodCreateRequest) : Promise<PaymentMethod>;
+    accountPaymentMethodDelete(accountId: string, methodId: string) : Promise<void>;
+    accountPaymentMethodSetDefault(accountId: string, methodId: string) : Promise<void>;
 }
 
 export class AccountsController implements IAccountsController {
@@ -71,13 +71,15 @@ export class AccountsController implements IAccountsController {
         })
     }
 
-    async accountGet(account: Account) : Promise<ApiAccount> {
+    async accountGet(accountId: string) : Promise<ApiAccount> {
+        const accountInfo = await this.getAccountInfo(accountId);
+
         // Get billing id of plan
-        const billingPlanId = await this.billing.get(account.billingId);
+        const billingPlanId = await this.billing.get(accountInfo.billingId);
 
         // If no billing plan id set for the user, user is not subscribed
         if (!billingPlanId) {
-            return {id: account.id, active: false}
+            return {id: accountId, active: false}
         }
 
         // Get more information about the plan
@@ -86,28 +88,38 @@ export class AccountsController implements IAccountsController {
             throw new Error("Failed to find plan");
         }
 
-        return {id: account.id, active: true, plan: {id: plan.id, name: plan.name}};
+        return {id: accountInfo.id, active: true, plan: {id: plan.id, name: plan.name}};
     }
 
-    async accountPaymentMethodCreation(accountInfo: Account, req : PaymentMethodCreateRequest) : Promise<PaymentMethod> {
+    async accountPaymentMethodCreation(accountId: string, req : PaymentMethodCreateRequest) : Promise<PaymentMethod> {
+        const accountInfo = await this.getAccountInfo(accountId);
+
         const result = await this.billing.createPaymentMethod(accountInfo.billingId, req.token);
         await this.billing.setDefaultPaymentMethod(accountInfo.billingId, result.id);
         return result;
     }
 
-    async accountPaymentMethodDelete(accountInfo: Account, methodId: string) : Promise<void> {
+    async accountPaymentMethodDelete(accountId: string, methodId: string) : Promise<void> {
+        const accountInfo = await this.getAccountInfo(accountId);
+
         await this.billing.deletePaymentMethod(accountInfo.billingId, methodId);
     }
 
-    async accountPaymentMethodSetDefault(accountInfo: Account, methodId: string) : Promise<void> {
+    async accountPaymentMethodSetDefault(accountId: string, methodId: string) : Promise<void> {
+        const accountInfo = await this.getAccountInfo(accountId);
+
         await this.billing.setDefaultPaymentMethod(accountInfo.billingId, methodId);
     }
 
-    async accountPaymentMethodsList(accountInfo: Account) : Promise<PaymentMethod[]> {
+    async accountPaymentMethodsList(accountId: string) : Promise<PaymentMethod[]> {
+        const accountInfo = await this.getAccountInfo(accountId);
+
         return await this.billing.getPaymentMethods(accountInfo.billingId);
     }
 
-    async accountUpdate(accountInfo: Account, req : AccountUpdateRequest) : Promise<void> {
+    async accountUpdate(accountId: string, req : AccountUpdateRequest) : Promise<void> {
+        const accountInfo = await this.getAccountInfo(accountId);
+
         // Cancel in our billing system and in Router Limits.
         if (req.active === false) {
             return this.lock.acquire(LockNames.WebhookFreeze, async() => {
@@ -148,5 +160,14 @@ export class AccountsController implements IAccountsController {
             // Nothing to do. You're welcome
             return;
         }
+    }
+
+    private async getAccountInfo(accountId: string): Promise<Account> {
+        // Get billing id of account
+        const accountInfo = await this.accounts.get(accountId);
+        if (!accountInfo) {
+            throw new Error("Unknown account");
+        }
+        return accountInfo;
     }
 }

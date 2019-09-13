@@ -1,8 +1,7 @@
 import {Request, Response} from "express";
 import Ajv from "ajv";
-import {Account} from "../models/AccountsModel";
 import {IAccountsController} from "../controllers/AccountsController";
-import {AccountUpdateRequest, PaymentMethodCreateRequest} from "../http/HttpTypes";
+import {AccountAuthObject, AccountUpdateRequest, PaymentMethodCreateRequest} from "../http/HttpTypes";
 
 export class AccountsReceiver {
     private readonly c : IAccountsController;
@@ -44,7 +43,8 @@ export class AccountsReceiver {
     };
 
     acctGet = async (req: Request, res: Response) => {
-        if (!res.locals || !res.locals.account || res.locals.account.id !== req.params.accountId) {
+        const accountId = res.locals.auth ? (res.locals.auth as AccountAuthObject).accountId : undefined;
+        if (accountId !== req.params.accountId) {
             res.sendStatus(403);
             return;
         }
@@ -62,11 +62,11 @@ export class AccountsReceiver {
     };
 
     acctUpdate = async (req: Request, res: Response) => {
-        if (!res.locals || !res.locals.account || res.locals.account.id !== req.params.accountId) {
+        const accountId = res.locals.auth ? (res.locals.auth as AccountAuthObject).accountId : undefined;
+        if (accountId !== req.params.accountId) {
             res.sendStatus(403);
             return;
         }
-        const accountInfo = res.locals.account as Account;
 
         // Validate request
         const ajv = new Ajv();
@@ -99,7 +99,7 @@ export class AccountsReceiver {
 
         const request : AccountUpdateRequest = req.body as AccountUpdateRequest;
         try {
-            await this.c.accountUpdate(accountInfo, request);
+            await this.c.accountUpdate(accountId, request);
         } catch(e) {
             res.sendStatus(500);
             return;
@@ -109,15 +109,15 @@ export class AccountsReceiver {
     };
 
     acctListPaymentMethods = async(req: Request, res: Response) => {
-        if (!res.locals || !res.locals.account || res.locals.account.id !== req.params.accountId) {
+        const accountId = res.locals.auth ? (res.locals.auth as AccountAuthObject).accountId : undefined;
+        if (accountId !== req.params.accountId) {
             res.sendStatus(403);
             return;
         }
-        const accountInfo = res.locals.account as Account;
 
         let methods;
         try {
-            methods = await this.c.accountPaymentMethodsList(accountInfo);
+            methods = await this.c.accountPaymentMethodsList(accountId);
         } catch(e) {
             res.sendStatus(500);
             return;
@@ -137,18 +137,17 @@ export class AccountsReceiver {
             res.sendStatus(400);
             return;
         }
-
         const request = req.body as PaymentMethodCreateRequest;
 
-        if (!res.locals || !res.locals.account || res.locals.account.id !== req.params.accountId) {
+        const accountId = res.locals.auth ? (res.locals.auth as AccountAuthObject).accountId : undefined;
+        if (accountId !== req.params.accountId) {
             res.sendStatus(403);
             return;
         }
 
-        const accountInfo = res.locals.account as Account;
         let result;
         try {
-            result = await this.c.accountPaymentMethodCreation(accountInfo, request);
+            result = await this.c.accountPaymentMethodCreation(accountId, request);
         } catch(e) {
             res.sendStatus(500);
             return;
@@ -159,15 +158,14 @@ export class AccountsReceiver {
     };
 
     acctDeletePaymentMethod = async (req: Request, res: Response) => {
-        if (!res.locals || !res.locals.account || res.locals.account.id !== req.params.accountId) {
+        const accountId = res.locals.auth ? (res.locals.auth as AccountAuthObject).accountId : undefined;
+        if (accountId !== req.params.accountId) {
             res.sendStatus(403);
             return;
         }
 
-        const accountInfo = res.locals.account as Account;
-
         try {
-            await this.c.accountPaymentMethodDelete(accountInfo, req.params.methodId);
+            await this.c.accountPaymentMethodDelete(accountId, req.params.methodId);
         } catch(e) {
             res.sendStatus(500);
             return;
@@ -177,13 +175,14 @@ export class AccountsReceiver {
     };
 
     acctSetDefaultPaymentMethod = async (req: Request, res: Response) => {
-        if (!res.locals || !res.locals.account || res.locals.account.id !== req.params.accountId) {
+        const accountId = res.locals.auth ? (res.locals.auth as AccountAuthObject).accountId : undefined;
+        if (accountId !== req.params.accountId) {
             res.sendStatus(403);
             return;
         }
-        const accountInfo = res.locals.account as Account;
+
         try {
-            await this.c.accountPaymentMethodSetDefault(accountInfo, req.params.methodId);
+            await this.c.accountPaymentMethodSetDefault(accountId, req.params.methodId);
         } catch(e) {
             res.sendStatus(500);
             return;

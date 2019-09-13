@@ -12,7 +12,8 @@ import {IAccountsController} from "./controllers/AccountsController";
 import {Request, Response} from "express";
 import {IPlansController} from "./controllers/PlansController";
 import {AccountsReceiver} from "./http/AccountsReceiver";
-import {AuthenticationReceiver} from "http/AuthenticationReceiver";
+import {AuthenticationReceiver} from "./http/AuthenticationReceiver";
+import {AccountAuthObject} from "./http/HttpTypes";
 
 export class ApiServer {
     get listenPort() : number {
@@ -39,7 +40,7 @@ export class ApiServer {
             if (apiKey) {
                 authController.validateApiKey(apiKey).then((account) => {
                     if (account) {
-                        res.locals.account = account;
+                        res.locals.auth = {accountId: account.id} as AccountAuthObject;
                         return next();
                     }
                     res.status(401);

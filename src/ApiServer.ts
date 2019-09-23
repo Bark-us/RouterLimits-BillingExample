@@ -34,6 +34,14 @@ export class ApiServer {
         this.expressApp.disable("x-powered-by");
         this.expressApp.set("etag", false);
 
+        // No caching, please
+        this.expressApp.use((req, res, next) => {
+            if (req.method.toUpperCase() !== "OPTIONS") {
+                res.header('cache-control', 'no-store');
+            }
+            next();
+        });
+
         const greedyRawParser = bodyParser.raw({inflate: true, type: '*/*'});
         const jsonParser = bodyParser.json();
 

@@ -32,6 +32,7 @@ export class ApiServer {
     ) {
         this.expressApp = express();
         this.expressApp.disable("x-powered-by");
+        this.expressApp.set("etag", false);
 
         const greedyRawParser = bodyParser.raw({inflate: true, type: '*/*'});
         const jsonParser = bodyParser.json();

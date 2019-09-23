@@ -31,6 +31,7 @@ export class ApiServer {
                 plansController : IPlansController
     ) {
         this.expressApp = express();
+        this.expressApp.disable("x-powered-by");
 
         const greedyRawParser = bodyParser.raw({inflate: true, type: '*/*'});
         const jsonParser = bodyParser.json();

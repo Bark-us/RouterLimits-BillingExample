@@ -5,8 +5,8 @@ import {assert, expect} from "chai";
 import crypto from "crypto";
 import 'mocha';
 import {
-    RLAccountCreatedWebhookData,
     RLAccountCanceledWebhookData,
+    RLAccountCreatedWebhookData,
     RLAccountSubscribedWebhookData,
     Webhook
 } from "../routerlimits/webhooks";
@@ -21,6 +21,7 @@ import {IBillingModel, MockBillingModel} from "../models/BillingModel";
 import {IRouterLimitsModel, MockRouterLimitsModel} from "../models/RouterLimitsModel";
 import {PlansController} from "../controllers/PlansController";
 import {IPlansModel, PlansModel} from "../models/PlansModel";
+import {LogLevel, NullLoggingModel} from "../models/LoggingModel";
 
 const generateTestWebhookObj = () => {
     return {
@@ -76,6 +77,7 @@ describe("Router Limits Webhooks", () => {
 
         const config : Configuration = {
             api: {listenPort: 0, apiKeyTtl: 1, allowedOrigins: "*"},
+            logLevel: LogLevel.DEBUG,
             planMap: [{id: "plan9", name: "Out Space", default: true, billingId: "b_plan9"}],
             routerlimits: {apiKey: "", sharedSecret: "secretcats", webhookValidInterval: 1, jwtValidInterval: 1, organiztionId: ""},
             stripe: {publishableKey: "",secretKey: "", webhookSecret:"", webhookValidInterval: 300, apiVersion: "2017-06-05"}
@@ -95,7 +97,7 @@ describe("Router Limits Webhooks", () => {
             processor = new MockRouterLimitsWebhookController();
             const plansController = new PlansController(plans);
 
-            api = new ApiServer(config, processor, billingController, authController, accountsController, plansController);
+            api = new ApiServer(config, processor, billingController, authController, accountsController, plansController, new NullLoggingModel());
         });
 
         afterEach(() => {

@@ -1,3 +1,4 @@
+import {LogLevel} from "./models/LoggingModel";
 
 export interface Configuration {
 
@@ -6,6 +7,8 @@ export interface Configuration {
         apiKeyTtl : number;
         allowedOrigins: Array<string> | "*";
     }
+
+    logLevel : LogLevel;
 
     // Maps Router Limits plan ids to Stripe plan ids
     planMap : Array<PlanMapping>;

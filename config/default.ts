@@ -11,6 +11,9 @@ const c : Configuration = {
         allowedOrigins: ['http://127.0.0.1']
     },
 
+    // Level of logs that should be printed. 0 = Verbose, everything. 1 = Informational. 2 = Errors only.
+    logLevel: 1,
+
     // A mapping of Router Limits plan ids to the plan ids used in Stripe (or your billing system)
     // e.g. [{id:"ybpn94jx", billingId:"plan_FkEOY2mT5bLrca", name: "Essentials", default:true}, {id:"znwlb42m", billingId:"plan_FkEPE2q1Z3wTL1", name:"Plus"}, {id:"oq4a74zl", billingId:"plan_FkEQAeCJ2qYvzz", name: "Mega Bonus"}]
     planMap: [],

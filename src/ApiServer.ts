@@ -1,5 +1,5 @@
 import bodyParser from "body-parser";
-import express from "express";
+import express, {Request, Response} from "express";
 import http from "http";
 
 import {RouterLimitsWebhookReceiver} from "./http/RouterLimitsWebhookReceiver";
@@ -9,11 +9,11 @@ import {IRouterLimitsWebhookController} from "./controllers/RouterLimitsWebhookC
 import {IBillingWebhookController} from "./controllers/BillingWebhookController";
 import {IAuthenticationController} from "./controllers/AuthenticationController";
 import {IAccountsController} from "./controllers/AccountsController";
-import {Request, Response} from "express";
 import {IPlansController} from "./controllers/PlansController";
 import {AccountsReceiver} from "./http/AccountsReceiver";
 import {AuthenticationReceiver} from "./http/AuthenticationReceiver";
 import {AccountAuthObject} from "./http/HttpTypes";
+import {ILoggingModel, LogLevel} from "./models/LoggingModel";
 
 export class ApiServer {
     get listenPort() : number {
@@ -28,19 +28,22 @@ export class ApiServer {
                 billingController : IBillingWebhookController,
                 authController : IAuthenticationController,
                 accountsController : IAccountsController,
-                plansController : IPlansController
+                plansController : IPlansController,
+                log : ILoggingModel
     ) {
         this.expressApp = express();
         this.expressApp.disable("x-powered-by");
         this.expressApp.set("etag", false);
 
-        // No caching, please
+        // No caching, please. Also do some logging
         this.expressApp.use((req, res, next) => {
             if (req.method.toUpperCase() !== "OPTIONS") {
                 res.header('cache-control', 'no-store');
+                log.log(LogLevel.DEBUG, `${req.method} ${req.path} from ${req.ip}`);
             }
             next();
         });
+
 
         const greedyRawParser = bodyParser.raw({inflate: true, type: '*/*'});
         const jsonParser = bodyParser.json();
@@ -100,8 +103,8 @@ export class ApiServer {
             next();
         };
 
-        const accountsReceiver = new AccountsReceiver(accountsController);
-        const authReceiver = new AuthenticationReceiver(authController);
+        const accountsReceiver = new AccountsReceiver(accountsController, log);
+        const authReceiver = new AuthenticationReceiver(authController, log);
 
         // Webhooks
         this.expressApp.post('/webhooks/routerlimits', greedyRawParser, new RouterLimitsWebhookReceiver(config, rlController).router);
@@ -152,6 +155,12 @@ export class ApiServer {
                 });
             })
             .options(corsWrangler);
+
+
+        this.expressApp.use((err : Error, req : Request, res : Response, next : express.NextFunction) => {
+            log.log(LogLevel.ERROR, 'Unhandled error in request handlers', {err: err, stack: err.stack});
+            res.sendStatus(500);
+        });
 
         this.server = this.expressApp.listen(config.api.listenPort);
     }

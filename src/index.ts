@@ -1,7 +1,10 @@
 import {ApiServer} from "./ApiServer";
 import config from "config";
 import {Configuration} from "./Config";
-import {IRouterLimitsWebhookController, RouterLimitsWebhookController} from "./controllers/RouterLimitsWebhookController";
+import {
+    IRouterLimitsWebhookController,
+    RouterLimitsWebhookController
+} from "./controllers/RouterLimitsWebhookController";
 import {StripeBillingModel} from "./models/BillingModel";
 import {SQLiteAccountsModel} from "./models/AccountsModel";
 import {PlansModel} from "./models/PlansModel";
@@ -12,6 +15,7 @@ import {AccountsController} from "./controllers/AccountsController";
 import {RouterLimitsModel} from "./models/RouterLimitsModel";
 import AsyncLock from 'async-lock';
 import {PlansController} from "./controllers/PlansController";
+import {ConsoleLoggingModel, LogLevel} from "./models/LoggingModel";
 
 const c : Configuration = config.util.toObject();
 
@@ -21,6 +25,7 @@ const c : Configuration = config.util.toObject();
     const apiKeys = await SQLiteApiKeysModel.createInstance("ApiKeysDatabase.sqlite", c.api.apiKeyTtl);
     const rl = new RouterLimitsModel(c);
     const plans = new PlansModel(c.planMap);
+    const log = new ConsoleLoggingModel(c.logLevel);
 
     const lock = new AsyncLock();
 
@@ -30,6 +35,6 @@ const c : Configuration = config.util.toObject();
     const accountsController = new AccountsController(billing, accounts, apiKeys, rl, plans, lock);
     const plansController = new PlansController(plans);
 
-    const apiServer = new ApiServer(c, rlWebhooks, billingWebhooks, authController, accountsController, plansController);
-    console.log(`API and Webhook handlers listening on port ${apiServer.listenPort}`);
+    const apiServer = new ApiServer(c, rlWebhooks, billingWebhooks, authController, accountsController, plansController, log);
+    log.log(LogLevel.INFO, `API and Webhook handlers listening on port ${apiServer.listenPort}`);
 })();

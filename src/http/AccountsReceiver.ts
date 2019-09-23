@@ -2,11 +2,14 @@ import {Request, Response} from "express";
 import Ajv from "ajv";
 import {IAccountsController} from "../controllers/AccountsController";
 import {AccountAuthObject, AccountUpdateRequest, PaymentMethodCreateRequest} from "../http/HttpTypes";
+import {ILoggingModel, LogLevel} from "../models/LoggingModel";
 
 export class AccountsReceiver {
     private readonly c : IAccountsController;
-    constructor(c : IAccountsController) {
+    private readonly log : ILoggingModel;
+    constructor(c : IAccountsController, log : ILoggingModel) {
         this.c = c;
+        this.log = log;
     }
 
     acctCreate = async (req: Request, res: Response) => {
@@ -34,10 +37,12 @@ export class AccountsReceiver {
         try {
             result = await this.c.accountCreation(req.body);
         } catch(e) {
+            this.log.log(LogLevel.ERROR, "Error account creation", e);
             res.sendStatus(500);
             return;
         }
 
+        this.log.log(LogLevel.INFO, 'Account created', {accountId: result.account.id});
         res.status(201);
         res.json(result);
     };
@@ -53,6 +58,7 @@ export class AccountsReceiver {
         try {
             result = await this.c.accountGet(accountId);
         } catch(e) {
+            this.log.log(LogLevel.ERROR, "Error account get", e);
             res.sendStatus(500);
             return;
         }
@@ -101,10 +107,12 @@ export class AccountsReceiver {
         try {
             await this.c.accountUpdate(accountId, request);
         } catch(e) {
+            this.log.log(LogLevel.ERROR, "Error account update", e);
             res.sendStatus(500);
             return;
         }
 
+        this.log.log(LogLevel.INFO, 'Account updated', {accountId: accountId, request: request});
         res.sendStatus(204);
     };
 
@@ -119,6 +127,7 @@ export class AccountsReceiver {
         try {
             methods = await this.c.accountPaymentMethodsList(accountId);
         } catch(e) {
+            this.log.log(LogLevel.ERROR, "Error listing payment methods", e);
             res.sendStatus(500);
             return;
         }
@@ -149,15 +158,22 @@ export class AccountsReceiver {
         try {
             result = await this.c.accountPaymentMethodCreation(accountId, request);
         } catch(e) {
+            this.log.log(LogLevel.ERROR, "Error creating payment method", e);
             res.sendStatus(500);
             return;
         }
 
+        this.log.log(LogLevel.INFO, 'Account payment method created', {accountId: accountId, methodId: result});
         res.status(201);
         res.json(result);
     };
 
     acctDeletePaymentMethod = async (req: Request, res: Response) => {
+        if (!req.params.methodId) {
+            res.sendStatus(400);
+            return;
+        }
+
         const accountId = res.locals.auth ? (res.locals.auth as AccountAuthObject).accountId : undefined;
         if (accountId !== req.params.accountId) {
             res.sendStatus(403);
@@ -167,14 +183,21 @@ export class AccountsReceiver {
         try {
             await this.c.accountPaymentMethodDelete(accountId, req.params.methodId);
         } catch(e) {
+            this.log.log(LogLevel.ERROR, "Error deleting payment method", e);
             res.sendStatus(500);
             return;
         }
 
+        this.log.log(LogLevel.INFO, 'Payment method deleted', {accountId: accountId, methodId: req.params.methodId});
         res.sendStatus(204);
     };
 
     acctSetDefaultPaymentMethod = async (req: Request, res: Response) => {
+        if (!req.params.methodId) {
+            res.sendStatus(400);
+            return;
+        }
+
         const accountId = res.locals.auth ? (res.locals.auth as AccountAuthObject).accountId : undefined;
         if (accountId !== req.params.accountId) {
             res.sendStatus(403);
@@ -184,9 +207,11 @@ export class AccountsReceiver {
         try {
             await this.c.accountPaymentMethodSetDefault(accountId, req.params.methodId);
         } catch(e) {
+            this.log.log(LogLevel.ERROR, "Error setting default payment method", e);
             res.sendStatus(500);
             return;
         }
+        this.log.log(LogLevel.INFO, 'Payment method set default', {accountId: accountId, methodId: req.params.methodId});
         res.sendStatus(204);
     }
 }

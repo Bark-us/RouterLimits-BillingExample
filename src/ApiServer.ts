@@ -117,14 +117,14 @@ export class ApiServer {
             .post(corsWrangler, accountAuthHelper,jsonParser, accountsReceiver.acctCreatePaymentMethod)
             .options(corsWrangler);
         this.expressApp.route('/api/accounts/:accountId/paymentMethods/:methodId')
-            .delete(accountAuthHelper, jsonParser, accountsReceiver.acctDeletePaymentMethod)
+            .delete(corsWrangler, accountAuthHelper, jsonParser, accountsReceiver.acctDeletePaymentMethod)
             .options(corsWrangler);
         this.expressApp.route('/api/accounts/:accountId/paymentMethods/:methodId/setDefault')
             .post(corsWrangler, accountAuthHelper, jsonParser, accountsReceiver.acctSetDefaultPaymentMethod)
             .options(corsWrangler);
 
         // Plans
-        this.expressApp.get('/api/plans', async (req: Request, res: Response) => {
+        this.expressApp.get('/api/plans', corsWrangler, async (req: Request, res: Response) => {
             let plans;
             try {
                 plans = await plansController.plansList(req.query.startKey, req.query.limit);

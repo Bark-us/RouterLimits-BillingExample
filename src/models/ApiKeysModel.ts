@@ -1,4 +1,4 @@
-import * as crypto from 'crypto';
+import crypto from "crypto";
 import {ExpireMap} from "../ExpireSet";
 import * as sqlite3 from 'sqlite3';
 

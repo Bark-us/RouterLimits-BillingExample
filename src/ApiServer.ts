@@ -136,12 +136,9 @@ export class ApiServer {
 
                 res.status(200);
                 res.json({
-                    status: 200,
-                    body : {
-                        hasMore: false,
-                        lastEvaluatedKey: plans.length ? plans[plans.length - 1].id : undefined,
-                        data : plans
-                    }
+                    hasMore: false,
+                    lastEvaluatedKey: plans.length ? plans[plans.length - 1].id : undefined,
+                    data : plans
                 });
             })
             .options(corsWrangler);

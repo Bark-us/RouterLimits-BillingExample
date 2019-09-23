@@ -51,7 +51,7 @@ export class AccountsReceiver {
 
         let result;
         try {
-            result = await this.c.accountGet(res.locals.account);
+            result = await this.c.accountGet(accountId);
         } catch(e) {
             res.sendStatus(500);
             return;

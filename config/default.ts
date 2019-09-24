@@ -23,7 +23,7 @@ const c : Configuration = {
         apiKey: "",
 
         // This shared secret will be used to validate signatures for incoming webhooks and SSO requests from Router Limits.
-        // Use the ROuter Limits Pro Portal to obtain it
+        // Use the Router Limits Pro Portal to obtain it
         sharedSecret: "",
 
         // Webhooks will only be accepted within this many seconds of their attempt creation date

@@ -64,6 +64,12 @@ definitions:
         type: string
         example: fdoipgf
         description: If set, account will be subscribed to the plan with this id
+  AccountUpdateFailure:
+    type: string
+    enum:
+      - NO_PAYMENT_METHOD
+      - PAYMENT_FAILED
+
   PaginatedResponse:
     type: object
     required:
@@ -252,6 +258,16 @@ paths:
       responses:
         204:
           description: Wow. You sure updated that account
+        409:
+          description: Something prevented us from doing this
+          schema:
+            type: object
+            required:
+              - code
+            properties:
+              code:
+                $ref: '#/definitions/AccountUpdateFailure'
+
 
   /accounts/{accountId}/paymentMethods:
     get:

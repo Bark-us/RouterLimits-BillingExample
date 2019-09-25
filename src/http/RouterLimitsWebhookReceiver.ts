@@ -79,19 +79,19 @@ export class RouterLimitsWebhookReceiver {
             case WebhookType.ACCOUNT_CREATED:
             {
                 const data = webhook.data as RLAccountCreatedWebhookData;
-                this.processor.handleAccountCreated(webhook.eventTimestamp, data.accountId, data.firstName, data.lastName, data.email)
+                this.controller.handleAccountCreated(webhook.eventTimestamp, data.accountId, data.firstName, data.lastName, data.email)
                     .then(handleSuccess, handleFailure);
             }
                 break;
 
             case WebhookType.ACCOUNT_SUBSCRIBED:
                 const data = webhook.data as RLAccountSubscribedWebhookData;
-                this.processor.handleAccountSubscriptionChange(webhook.eventTimestamp, data.accountId, data.plan.id)
+                this.controller.handleAccountSubscriptionChange(webhook.eventTimestamp, data.accountId, data.plan.id)
                     .then(handleSuccess, handleFailure);
                 break;
 
             case WebhookType.ACCOUNT_CANCELED:
-                this.processor.handleAccountSubscriptionCancel(webhook.eventTimestamp, (webhook.data as RLAccountCanceledWebhookData).accountId)
+                this.controller.handleAccountSubscriptionCancel(webhook.eventTimestamp, (webhook.data as RLAccountCanceledWebhookData).accountId)
                     .then(handleSuccess, handleFailure);
                 break;
 
@@ -102,12 +102,12 @@ export class RouterLimitsWebhookReceiver {
     };
 
     private readonly config : Configuration;
-    private readonly processor : IRouterLimitsWebhookController;
+    private readonly controller : IRouterLimitsWebhookController;
     private readonly usedIds : ExpireSet<string>;
 
-    constructor(config : Configuration, processor : IRouterLimitsWebhookController) {
+    constructor(config : Configuration, controller : IRouterLimitsWebhookController) {
         this.config = config;
-        this.processor = processor;
+        this.controller = controller;
         this.usedIds = new ExpireSet<string>(config.routerlimits.webhookValidInterval);
     }
 }

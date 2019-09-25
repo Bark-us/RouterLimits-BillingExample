@@ -38,6 +38,11 @@ export interface IBillingModel {
     subscribe(billingId : string, planBillingId : string) : Promise<void>;
 }
 
+export enum SubscribeErrors {
+    PAYMENT_FAILED = "PAYMENT_FAILED",
+    NO_PAYMENT_METHOD = "NO_PAYMENT_METHOD"
+}
+
 export class MockBillingModel implements IBillingModel {
     private readonly customers : Map<string, {planId : string | null, paymentMethods: Array<PaymentMethod>}>;
     private nextId : number;
@@ -211,26 +216,43 @@ export class StripeBillingModel implements IBillingModel {
         await this.stripe.customers.update(billingId, {default_source: methodId});
     }
 
-    subscribe(id: string, planId: string): Promise<void> {
-        return this.findOurSubscription(id).then((sub) => {
-            // If we don't have one, create one
-            if (!sub || !sub.plan) {
-                return this.stripe.subscriptions.create({customer: id, plan : planId}).then(() => {
-                    return Promise.resolve();
-                })
-            }
+    async subscribe(id: string, planId: string): Promise<void> {
+        const sub = await this.findOurSubscription(id);
 
-            // If we do have an existing subscription:
-            // No action needed if sub is already on desired plan
-            if (sub.plan.id === planId) {
-                return Promise.resolve();
+        // If we don't have one, create one
+        if (!sub || !sub.plan) {
+            try {
+                await this.stripe.subscriptions.create({customer: id, plan : planId});
+            } catch(e) {
+                if (e.code === "resource_missing") {
+                    throw new Error(SubscribeErrors.NO_PAYMENT_METHOD);
+                }
+                else if (e.code === "card_declined") {
+                    throw new Error(SubscribeErrors.PAYMENT_FAILED);
+                }
+                throw e;
             }
+            return;
+        }
 
-            // action needed if sub is not on desired plan
-            return this.stripe.subscriptions.update(sub.id, {plan:planId}).then(() => {
-                return Promise.resolve();
-            });
-        })
+        // If we do have an existing subscription:
+        // No action needed if sub is already on desired plan
+        if (sub.plan.id === planId) {
+            return;
+        }
+
+        // action needed if sub is not on desired plan
+        try {
+            await this.stripe.subscriptions.update(sub.id, {plan:planId});
+        } catch(e) {
+            if (e.code === "resource_missing") {
+                throw new Error(SubscribeErrors.NO_PAYMENT_METHOD);
+            }
+            else if (e.code === "card_declined") {
+                throw new Error(SubscribeErrors.PAYMENT_FAILED);
+            }
+            throw e;
+        }
     }
 
     // For testing - returns created plan id

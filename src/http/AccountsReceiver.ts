@@ -3,6 +3,7 @@ import Ajv from "ajv";
 import {IAccountsController} from "../controllers/AccountsController";
 import {AccountAuthObject, AccountUpdateRequest, PaymentMethodCreateRequest} from "../http/HttpTypes";
 import {ILoggingModel, LogLevel} from "../models/LoggingModel";
+import {SubscribeErrors} from "../models/BillingModel";
 
 export class AccountsReceiver {
     private readonly c : IAccountsController;
@@ -108,7 +109,13 @@ export class AccountsReceiver {
             await this.c.accountUpdate(accountId, request);
         } catch(e) {
             this.log.log(LogLevel.ERROR, "Error account update", e);
-            res.sendStatus(500);
+            if (e.message === SubscribeErrors.PAYMENT_FAILED || e.message === SubscribeErrors.NO_PAYMENT_METHOD) {
+                res.status(409);
+                res.json({code: e.message});
+            }
+            else {
+                res.sendStatus(500);
+            }
             return;
         }
 

@@ -227,7 +227,7 @@ export class StripeBillingModel implements IBillingModel {
                 if (e.code === "resource_missing") {
                     throw new Error(SubscribeErrors.NO_PAYMENT_METHOD);
                 }
-                else if (e.code === "card_declined") {
+                else if (e.code) {
                     throw new Error(SubscribeErrors.PAYMENT_FAILED);
                 }
                 throw e;
@@ -248,7 +248,7 @@ export class StripeBillingModel implements IBillingModel {
             if (e.code === "resource_missing") {
                 throw new Error(SubscribeErrors.NO_PAYMENT_METHOD);
             }
-            else if (e.code === "card_declined") {
+            else if (e.code) {
                 throw new Error(SubscribeErrors.PAYMENT_FAILED);
             }
             throw e;

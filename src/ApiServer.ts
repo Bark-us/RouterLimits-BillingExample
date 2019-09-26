@@ -106,6 +106,12 @@ export class ApiServer {
         const accountsReceiver = new AccountsReceiver(accountsController, log);
         const authReceiver = new AuthenticationReceiver(authController, log);
 
+        // API Healthcheck
+        this.expressApp.get('/healthCheck', (req: Request, res: Response, next: express.NextFunction) => {
+            res.status(200);
+            res.send("Looks good, boss");
+        });
+
         // Webhooks
         this.expressApp.post('/webhooks/routerlimits', greedyRawParser, new RouterLimitsWebhookReceiver(config, rlController).router);
         this.expressApp.post('/webhooks/billing', greedyRawParser, new StripeWebhookReceiver(config, billingController).router);

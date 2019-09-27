@@ -31,6 +31,7 @@ export class PlansModel implements IPlansModel {
     constructor(plans : Array<PlanMapping>) {
         this.rlPlansToPlans = new Map();
         this.billingPlanstoPlans = new Map();
+        this.equivalentBillingPlanstoPlans = new Map();
 
         // Loop through the PlanMappings and index them.
         // Also find the default plan. Make sure there is exactly one

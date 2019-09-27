@@ -21,10 +21,10 @@ const c : Configuration = config.util.toObject();
 
 (async () => {
     const accounts = await SQLiteAccountsModel.createInstance("AccountsDatabase.sqlite");
-    const billing = new StripeBillingModel(c);
+    const plans = new PlansModel(c.planMap);
+    const billing = new StripeBillingModel(c, plans);
     const apiKeys = await SQLiteApiKeysModel.createInstance("ApiKeysDatabase.sqlite", c.api.apiKeyTtl);
     const rl = new RouterLimitsModel(c);
-    const plans = new PlansModel(c.planMap);
     const log = new ConsoleLoggingModel(c.logLevel);
 
     const lock = new AsyncLock();

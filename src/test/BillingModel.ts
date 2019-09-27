@@ -3,6 +3,7 @@ process.env["NODE_CONFIG_ENV"] = "test";
 import config from "config";
 import {Configuration} from "Config";
 import {StripeBillingModel} from "../models/BillingModel";
+import {PlansModel} from "../models/PlansModel";
 
 describe("StripeBillingModel", () => {
     const c : Configuration = config.util.toObject();
@@ -15,15 +16,13 @@ describe("StripeBillingModel", () => {
             return Promise.resolve();
         }
 
-        const temp = new StripeBillingModel(c);
-
         return Promise.all([
-            temp.createPlan(),
-            temp.createPlan()
+            StripeBillingModel.createPlan(c),
+            StripeBillingModel.createPlan(c)
         ]).then((results) => {
             testPlanId = results[0];
             testPlanId2 = results[1];
-            c.planMap.push({id : "test", billingId: testPlanId, name: "Billy's Plan"});
+            c.planMap.push({id : "test", billingId: testPlanId, name: "Billy's Plan", default: true});
             c.planMap.push({id : "test2", billingId: testPlanId2, name: "Timmy's Plan"});
 
             return Promise.resolve();
@@ -31,7 +30,8 @@ describe("StripeBillingModel", () => {
     });
 
     it("Works", () => {
-        const b = new StripeBillingModel(c);
+        const plans = new PlansModel(c.planMap);
+        const b = new StripeBillingModel(c, plans);
         let customerId : string;
         return b.createCustomer("Test", "Customer", "test@example.org").then((cid) => {
             customerId = cid;

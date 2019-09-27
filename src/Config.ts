@@ -39,6 +39,7 @@ export interface Configuration {
 export interface PlanMapping {
     id : string;
     billingId : string;
+    equivalentBillingIds? : Array<string>;
     name : string;
     default?: boolean;
 }

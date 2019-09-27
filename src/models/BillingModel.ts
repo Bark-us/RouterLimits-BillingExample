@@ -2,6 +2,7 @@ import Stripe from 'stripe';
 import {Configuration} from "../Config";
 import ISubscription = Stripe.subscriptions.ISubscription;
 import {PaymentMethod} from "../http/HttpTypes";
+import {IPlansModel} from "./PlansModel";
 
 export interface IBillingModel {
 
@@ -129,15 +130,11 @@ export class MockBillingModel implements IBillingModel {
 
 export class StripeBillingModel implements IBillingModel {
     private readonly stripe : Stripe;
-    private readonly knownPlanIds : Set<string>;
+    private readonly plans : IPlansModel;
 
-    constructor(config : Configuration) {
+    constructor(config : Configuration, plans : IPlansModel) {
         this.stripe = new Stripe(config.stripe.secretKey, config.stripe.apiVersion);
-
-        this.knownPlanIds = new Set<string>();
-        config.planMap.forEach((mapping) => {
-            this.knownPlanIds.add(mapping.billingId);
-        })
+        this.plans = plans;
     }
 
     cancel(id: string): Promise<void> {
@@ -256,8 +253,9 @@ export class StripeBillingModel implements IBillingModel {
     }
 
     // For testing - returns created plan id
-    createPlan() : Promise<string> {
-        return this.stripe.plans.create({amount: 0, currency: 'usd', interval: 'month', product: {name: 'StripeBillingModel Test Plan'}}).then((plan) => {
+    static createPlan(config : Configuration) : Promise<string> {
+        const stripe = new Stripe(config.stripe.secretKey, config.stripe.apiVersion);
+        return stripe.plans.create({amount: 0, currency: 'usd', interval: 'month', product: {name: 'StripeBillingModel Test Plan'}}).then((plan) => {
             return Promise.resolve(plan.id);
         })
     }
@@ -265,10 +263,8 @@ export class StripeBillingModel implements IBillingModel {
     private findOurSubscription(id : string) : Promise<ISubscription | null> {
         return this.stripe.subscriptions.list({customer:id, limit: 100}).autoPagingToArray({limit: 1000}).then((subs) => {
             const ourSub = subs.find((s) => {
-                if (s && s.plan && this.knownPlanIds.has(s.plan.id)) {
-                    return true;
-                }
-                return false;
+                return !!(s && s.plan && this.plans.getByBillingId(s.plan.id));
+
             });
 
             if (ourSub && ourSub) {

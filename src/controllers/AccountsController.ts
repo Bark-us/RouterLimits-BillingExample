@@ -138,7 +138,6 @@ export class AccountsController implements IAccountsController {
             return this.lock.acquire(LockNames.WebhookFreeze, async () => {
                 // Subscribe in billing system first - it may fail due to no payment method, etc. But at this point we have
                 // not done anything with RL API, so it's OK
-                // TODO gracefully handle insufficient funds / no payment method, if desired
                 await this.billing.subscribe(accountInfo.billingId, planInfo.billingId);
 
                 // Now we can make the same change in RL API

@@ -64,7 +64,8 @@ typings/
 
 dist/
 
-src/rlapi
-src/webhookTypes
+src/routerlimits/api
 
-config/local.json
+config/local*
+
+*.sqlite

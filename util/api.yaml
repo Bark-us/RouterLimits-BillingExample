@@ -4,9 +4,15 @@ info:
   title: "ThirdPartyBillingExample API"
 schemes:
   - "https"
+basePath: /api
 tags:
   - name: Payment Methods
     description: Endpoints for managing an account's payment methods
+securityDefinitions:
+  accountApiKeyAuth:
+    type: apiKey
+    in: header
+    name: X-API-KEY
 definitions:
   Account:
     type: object
@@ -58,6 +64,12 @@ definitions:
         type: string
         example: fdoipgf
         description: If set, account will be subscribed to the plan with this id
+  AccountUpdateFailure:
+    type: string
+    enum:
+      - NO_PAYMENT_METHOD
+      - PAYMENT_FAILED
+
   PaginatedResponse:
     type: object
     required:
@@ -214,6 +226,8 @@ paths:
 
   /accounts/{accountId}:
     get:
+      security:
+        - accountApiKeyAuth: []
       tags:
         - Account
       parameters:
@@ -227,6 +241,8 @@ paths:
           schema:
             $ref: '#/definitions/Account'
     post:
+      security:
+        - accountApiKeyAuth: []
       tags:
         - Account
       parameters:
@@ -242,9 +258,21 @@ paths:
       responses:
         204:
           description: Wow. You sure updated that account
+        409:
+          description: Something prevented us from doing this
+          schema:
+            type: object
+            required:
+              - code
+            properties:
+              code:
+                $ref: '#/definitions/AccountUpdateFailure'
+
 
   /accounts/{accountId}/paymentMethods:
     get:
+      security:
+        - accountApiKeyAuth: []
       tags:
         - Payment Methods
       parameters:
@@ -264,6 +292,8 @@ paths:
           schema:
             $ref: '#/definitions/PaymentMethodListResponse'
     post:
+      security:
+        - accountApiKeyAuth: []
       tags:
         - Payment Methods
       parameters:
@@ -284,6 +314,8 @@ paths:
             $ref: '#/definitions/PaymentMethod'
   /accounts/{accountId}/paymentMethods/{methodId}:
     delete:
+      security:
+        - accountApiKeyAuth: []
       tags:
         - Payment Methods
       parameters:
@@ -303,6 +335,8 @@ paths:
 
   /accounts/{accountId}/paymentMethods/{methodId}/setDefault:
     post:
+      security:
+        - accountApiKeyAuth: []
       tags:
         - Payment Methods
       summary: Sets a certain payment method as default

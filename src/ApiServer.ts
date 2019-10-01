@@ -1,6 +1,7 @@
 import bodyParser from "body-parser";
 import express, {Request, Response} from "express";
 import http from "http";
+import requestIp from "request-ip";
 
 import {RouterLimitsWebhookReceiver} from "./http/RouterLimitsWebhookReceiver";
 import {StripeWebhookReceiver} from "./http/StripeWebhookReceiver";
@@ -39,7 +40,9 @@ export class ApiServer {
         this.expressApp.use((req, res, next) => {
             if (req.method.toUpperCase() !== "OPTIONS") {
                 res.header('cache-control', 'no-store');
-                log.log(LogLevel.DEBUG, `${req.method} ${req.path} from ${req.ip}`);
+
+                const realIp = requestIp.getClientIp(req);
+                log.log(LogLevel.DEBUG, `${req.method} ${req.path} from ${realIp}`);
             }
             next();
         });

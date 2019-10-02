@@ -10,7 +10,7 @@ import {
     RLAccountSubscribedWebhookData,
     Webhook
 } from "../routerlimits/webhooks";
-import {Configuration} from "../Config";
+import {Configuration} from "../Configuration";
 import {IRouterLimitsWebhookController} from "../controllers/RouterLimitsWebhookController";
 import {BillingWebhookController, IBillingWebhookController} from "../controllers/BillingWebhookController";
 import {IAccountsModel, MockAccountsModel} from "../models/AccountsModel";
@@ -78,6 +78,7 @@ describe("Router Limits Webhooks", () => {
         const config : Configuration = {
             api: {listenPort: 0, apiKeyTtl: 1, allowedOrigins: "*"},
             logLevel: LogLevel.DEBUG,
+            mysql : {connectionLimit : 10, host : "mysql.example.net", user : "dbuser", password : "dbpass", database : "billingsample"},
             planMap: [{id: "plan9", name: "Out Space", default: true, billingId: "b_plan9"}],
             routerlimits: {apiKey: "", sharedSecret: "secretcats", webhookValidInterval: 1, jwtValidInterval: 1, organiztionId: ""},
             stripe: {publishableKey: "",secretKey: "", webhookSecret:"", webhookValidInterval: 300, apiVersion: "2017-06-05"}

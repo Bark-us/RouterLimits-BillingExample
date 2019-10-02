@@ -1,4 +1,4 @@
-import {Configuration} from "../Config";
+import {Configuration} from "../Configuration";
 import * as jwt from 'jwt-simple';
 import Ajv from 'ajv';
 import {Account, IAccountsModel} from "../models/AccountsModel";

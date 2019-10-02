@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import {Configuration} from "../Config";
+import {Configuration} from "../Configuration";
 import Stripe from 'stripe';
 import ISubscription = Stripe.subscriptions.ISubscription;
 import {IBillingWebhookController} from "../controllers/BillingWebhookController";

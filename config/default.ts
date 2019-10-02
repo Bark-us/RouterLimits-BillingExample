@@ -1,4 +1,4 @@
-import {Configuration} from "../src/Config";
+import {Configuration} from "Configuration.ts";
 
 const c : Configuration = {
     api: {
@@ -13,6 +13,17 @@ const c : Configuration = {
 
     // Level of logs that should be printed. 0 = Verbose, everything. 1 = Informational. 2 = Errors only.
     logLevel: 1,
+
+    /*
+    // If mysql section is commented out, sqlite will be used.
+    mysql : {
+        connectionLimit : 10,
+        host : "mysql.example.net",
+        user : "dbuser",
+        password : "dbpass",
+        database : "billingsample"
+    },
+    */
 
     // A mapping of Router Limits plan ids to the plan ids used in Stripe (or your billing system)
     // e.g. [{id:"ybpn94jx", billingId:"plan_FkEOY2mT5bLrca", name: "Essentials", default:true}, {id:"znwlb42m", billingId:"plan_FkEPE2q1Z3wTL1", name:"Plus"}, {id:"oq4a74zl", billingId:"plan_FkEQAeCJ2qYvzz", name: "Mega Bonus"}]

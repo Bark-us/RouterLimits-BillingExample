@@ -1,4 +1,4 @@
-import {Configuration} from "../Config";
+import {Configuration} from "../Configuration";
 import {AccountApi, AccountApiApiKeys} from "../routerlimits/api/api/accountApi";
 import {InlineObject} from "../routerlimits/api/model/inlineObject";
 import {AccountsListResponse} from "../routerlimits/api/model/accountsListResponse";

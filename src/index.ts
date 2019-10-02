@@ -22,16 +22,20 @@ const c : Configuration = config.util.toObject();
 
 (async () => {
 
+    const log = new ConsoleLoggingModel(c.logLevel);
+
     let accounts : IAccountsModel;
     let apiKeys : IApiKeysModel;
 
     // If MySQL is configured, use it. Otherwise, use sqlite
     if (c.mysql) {
+        log.log(LogLevel.DEBUG, `Using MySQL server at ${c.mysql.host}`);
         const mysqlPool = mysql.createPool(c.mysql);
         accounts = new MySQLAccountsModel(mysqlPool);
         apiKeys = new MySQLApiKeysModel(mysqlPool, c.api.apiKeyTtl);
     }
     else {
+        log.log(LogLevel.DEBUG, `Using SQLite`);
         accounts = await SQLiteAccountsModel.createInstance("AccountsDatabase.sqlite");
         apiKeys = await SQLiteApiKeysModel.createInstance("ApiKeysDatabase.sqlite", c.api.apiKeyTtl);
     }
@@ -39,7 +43,6 @@ const c : Configuration = config.util.toObject();
     const plans = new PlansModel(c.planMap);
     const billing = new StripeBillingModel(c, plans);
     const rl = new RouterLimitsModel(c);
-    const log = new ConsoleLoggingModel(c.logLevel);
 
     const lock = new AsyncLock();
 

@@ -6,11 +6,11 @@ import {
     RouterLimitsWebhookController
 } from "./controllers/RouterLimitsWebhookController";
 import {StripeBillingModel} from "./models/BillingModel";
-import {MySQLAccountsModel} from "./models/AccountsModel";
+import {IAccountsModel, MySQLAccountsModel, SQLiteAccountsModel} from "./models/AccountsModel";
 import {PlansModel} from "./models/PlansModel";
 import {BillingWebhookController, IBillingWebhookController} from "./controllers/BillingWebhookController";
 import {AuthenticationController, IAuthenticationController} from "./controllers/AuthenticationController";
-import {MySQLApiKeysModel} from "./models/ApiKeysModel";
+import {IApiKeysModel, MySQLApiKeysModel, SQLiteApiKeysModel} from "./models/ApiKeysModel";
 import {AccountsController} from "./controllers/AccountsController";
 import {RouterLimitsModel} from "./models/RouterLimitsModel";
 import AsyncLock from 'async-lock';
@@ -21,11 +21,23 @@ import mysql from "mysql";
 const c : Configuration = config.util.toObject();
 
 (async () => {
-    const mysqlPool = mysql.createPool(c.mysql);
-    const accounts = new MySQLAccountsModel(mysqlPool);
+
+    let accounts : IAccountsModel;
+    let apiKeys : IApiKeysModel;
+
+    // If MySQL is configured, use it. Otherwise, use sqlite
+    if (c.mysql) {
+        const mysqlPool = mysql.createPool(c.mysql);
+        accounts = new MySQLAccountsModel(mysqlPool);
+        apiKeys = new MySQLApiKeysModel(mysqlPool, c.api.apiKeyTtl);
+    }
+    else {
+        accounts = await SQLiteAccountsModel.createInstance("AccountsDatabase.sqlite");
+        apiKeys = await SQLiteApiKeysModel.createInstance("ApiKeysDatabase.sqlite", c.api.apiKeyTtl);
+    }
+
     const plans = new PlansModel(c.planMap);
     const billing = new StripeBillingModel(c, plans);
-    const apiKeys = new MySQLApiKeysModel(mysqlPool, c.api.apiKeyTtl);
     const rl = new RouterLimitsModel(c);
     const log = new ConsoleLoggingModel(c.logLevel);
 

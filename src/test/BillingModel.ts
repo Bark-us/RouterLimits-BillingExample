@@ -11,6 +11,12 @@ describe("StripeBillingModel", () => {
     let testPlanId2 : string;
 
     before(function() {
+        // Skip if we don't have a test config file
+        if (!c.isTest) {
+            this.skip();
+        }
+
+        // Skip if test config file is pointing at a production stripe
         if (!c.stripe.secretKey || c.stripe.secretKey.length <= 0 || c.stripe.secretKey.includes("live")) {
             this.skip();
             return Promise.resolve();

@@ -146,7 +146,7 @@ export class MySQLApiKeysModel implements IApiKeysModel {
 
         await new Promise((resolve, reject) => {
             this.mysql.query(
-                'INSERT INTO apiKeys (apiKey, accountId, expiresAt) VALUES (?, ?, ?);',
+                'INSERT INTO apiKeys (apiKey, accountId, expiresAt) VALUES (?, ?, FROM_UNIXTIME(?));',
                 [key, accountId, expiresAt],
                 (err) => {
                 if (err)
@@ -163,7 +163,7 @@ export class MySQLApiKeysModel implements IApiKeysModel {
         return await new Promise((resolve, reject) => {
             const now = +new Date()/ 1000 | 0;
             this.mysql.query(
-                'SELECT accountId FROM apiKeys WHERE apiKey = ? AND expiresAt > ?;',
+                'SELECT accountId FROM apiKeys WHERE apiKey = ? AND expiresAt > FROM_UNIXTIME(?);',
                 [apiKey, now],
                 (err, row) => {
                 if (err) {
@@ -181,7 +181,7 @@ export class MySQLApiKeysModel implements IApiKeysModel {
    async markExpired(apiKey: string): Promise<void> {
         return await new Promise((resolve, reject) => {
             this.mysql.query(
-                'UPDATE apiKeys SET expiresAt = 0 WHERE apiKey = ?;',
+                'UPDATE apiKeys SET expiresAt = NOW() WHERE apiKey = ?;',
                 [apiKey],
                 (err) => {
                     if (err) {

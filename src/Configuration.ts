@@ -8,9 +8,11 @@ export interface Configuration {
         allowedOrigins: Array<string> | "*";
     }
 
+    isTest? : boolean;
+
     logLevel : LogLevel;
 
-    mysql : {
+    mysql? : {
         connectionLimit : number;
         host : string;
         user : string;

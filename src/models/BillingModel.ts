@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import {Configuration} from "../Config";
+import {Configuration} from "../Configuration";
 import ISubscription = Stripe.subscriptions.ISubscription;
 import {PaymentMethod} from "../http/HttpTypes";
 import {IPlansModel} from "./PlansModel";

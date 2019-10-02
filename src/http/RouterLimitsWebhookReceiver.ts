@@ -8,7 +8,7 @@ import {
     Webhook,
     WebhookType
 } from "../routerlimits/webhooks";
-import {Configuration} from "../Config";
+import {Configuration} from "../Configuration";
 import {IRouterLimitsWebhookController} from "../controllers/RouterLimitsWebhookController";
 
 const signatureHeaderName = "x-rl-signatures";

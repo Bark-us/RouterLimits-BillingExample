@@ -1,4 +1,4 @@
-import {PlanMapping} from "../Config";
+import {PlanMapping} from "../Configuration";
 
 export interface IPlansModel {
     /**

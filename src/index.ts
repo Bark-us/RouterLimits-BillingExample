@@ -1,29 +1,31 @@
 import {ApiServer} from "./ApiServer";
 import config from "config";
-import {Configuration} from "./Config";
+import {Configuration} from "./Configuration";
 import {
     IRouterLimitsWebhookController,
     RouterLimitsWebhookController
 } from "./controllers/RouterLimitsWebhookController";
 import {StripeBillingModel} from "./models/BillingModel";
-import {SQLiteAccountsModel} from "./models/AccountsModel";
+import {MySQLAccountsModel} from "./models/AccountsModel";
 import {PlansModel} from "./models/PlansModel";
 import {BillingWebhookController, IBillingWebhookController} from "./controllers/BillingWebhookController";
 import {AuthenticationController, IAuthenticationController} from "./controllers/AuthenticationController";
-import {SQLiteApiKeysModel} from "./models/ApiKeysModel";
+import {MySQLApiKeysModel} from "./models/ApiKeysModel";
 import {AccountsController} from "./controllers/AccountsController";
 import {RouterLimitsModel} from "./models/RouterLimitsModel";
 import AsyncLock from 'async-lock';
 import {PlansController} from "./controllers/PlansController";
 import {ConsoleLoggingModel, LogLevel} from "./models/LoggingModel";
+import mysql from "mysql";
 
 const c : Configuration = config.util.toObject();
 
 (async () => {
-    const accounts = await SQLiteAccountsModel.createInstance("AccountsDatabase.sqlite");
+    const mysqlPool = mysql.createPool(c.mysql);
+    const accounts = new MySQLAccountsModel(mysqlPool);
     const plans = new PlansModel(c.planMap);
     const billing = new StripeBillingModel(c, plans);
-    const apiKeys = await SQLiteApiKeysModel.createInstance("ApiKeysDatabase.sqlite", c.api.apiKeyTtl);
+    const apiKeys = new MySQLApiKeysModel(mysqlPool, c.api.apiKeyTtl);
     const rl = new RouterLimitsModel(c);
     const log = new ConsoleLoggingModel(c.logLevel);
 

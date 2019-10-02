@@ -1,4 +1,5 @@
 import * as sqlite3 from 'sqlite3';
+import {Pool} from "mysql";
 
 export interface IAccountsModel {
 
@@ -153,6 +154,63 @@ export class SQLiteAccountsModel implements IAccountsModel {
                 }
 
                 return resolve({id : row.rlId, billingId : billingId});
+            })
+        })
+    }
+
+}
+
+export class MySQLAccountsModel implements IAccountsModel {
+    private readonly mysql : Pool;
+
+    constructor(mysql : Pool) {
+        this.mysql = mysql;
+    }
+
+    create(id: string, billingId: string): Promise<Account> {
+        return new Promise((resolve, reject) => {
+            this.mysql.query(
+                'INSERT INTO `accounts` (`rlId`, `billingId`) VALUES (?, ?);',
+                [id, billingId],
+                (err) => {
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    return resolve({id : id, billingId : billingId});
+                }
+            )
+        })
+    }
+
+    get(id: string): Promise<Account | undefined> {
+        return new Promise((resolve, reject) => {
+            this.mysql.query('SELECT `billingId` FROM `accounts` WHERE `rlId` = ?', [id], (err, results) => {
+                if (err) {
+                    return reject(err);
+                }
+
+                if (!results || !Array.isArray(results) || results.length !== 1 || !results[0].billingId) {
+                    return resolve(undefined);
+                }
+
+                return resolve({id : id, billingId : results[0].billingId});
+            })
+        })
+    }
+
+    getByBillingId(billingId: string): Promise<Account | undefined> {
+        return new Promise((resolve, reject) => {
+            this.mysql.query('SELECT `rlId` FROM `accounts` WHERE `billingId` = ?', [billingId], (err, results) => {
+                if (err) {
+                    return reject(err);
+                }
+
+                if (!results || !Array.isArray(results) || results.length !== 1 || !results[0].rlId) {
+                    return resolve(undefined);
+                }
+
+                return resolve({id : results[0].rlId, billingId : billingId});
             })
         })
     }

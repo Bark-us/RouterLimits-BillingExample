@@ -4,7 +4,7 @@ import http from "http";
 
 import {RouterLimitsWebhookReceiver} from "./http/RouterLimitsWebhookReceiver";
 import {StripeWebhookReceiver} from "./http/StripeWebhookReceiver";
-import {Configuration} from "Config";
+import {Configuration} from "Configuration.ts";
 import {IRouterLimitsWebhookController} from "./controllers/RouterLimitsWebhookController";
 import {IBillingWebhookController} from "./controllers/BillingWebhookController";
 import {IAuthenticationController} from "./controllers/AuthenticationController";

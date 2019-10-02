@@ -10,6 +10,14 @@ export interface Configuration {
 
     logLevel : LogLevel;
 
+    mysql : {
+        connectionLimit : number;
+        host : string;
+        user : string;
+        password : string;
+        database : string;
+    }
+
     // Maps Router Limits plan ids to Stripe plan ids
     planMap : Array<PlanMapping>;
 

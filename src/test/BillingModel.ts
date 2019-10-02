@@ -1,7 +1,7 @@
 import 'mocha';
 process.env["NODE_CONFIG_ENV"] = "test";
 import config from "config";
-import {Configuration} from "Config";
+import {Configuration} from "Configuration.ts";
 import {StripeBillingModel} from "../models/BillingModel";
 import {PlansModel} from "../models/PlansModel";
 

@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import {ExpireMap} from "../ExpireSet";
 import * as sqlite3 from 'sqlite3';
+import {Pool} from "mysql";
 
 const numBytes = 28;
 
@@ -76,7 +77,7 @@ export class SQLiteApiKeysModel implements IApiKeysModel {
         });
 
         return Promise.all(queries)
-            .then((results) => {
+            .then(() => {
                 return Promise.resolve();
             });
     }
@@ -128,4 +129,68 @@ export class SQLiteApiKeysModel implements IApiKeysModel {
             })
         })
     }
+}
+
+export class MySQLApiKeysModel implements IApiKeysModel {
+    private readonly mysql : Pool;
+    private readonly ttl : number;
+
+    constructor(mysql : Pool, ttl : number) {
+        this.mysql = mysql;
+        this.ttl = ttl;
+    }
+
+    async generate(accountId: string): Promise<string> {
+        const key = crypto.randomBytes(numBytes).toString('hex');
+        const expiresAt = (+new Date() / 1000 | 0) + this.ttl;
+
+        await new Promise((resolve, reject) => {
+            this.mysql.query(
+                'INSERT INTO apiKeys (apiKey, accountId, expiresAt) VALUES (?, ?, ?);',
+                [key, accountId, expiresAt],
+                (err) => {
+                if (err)
+                    reject(err);
+                else
+                    resolve();
+            })
+        });
+
+        return key;
+    }
+
+    async getAccountIdByKey(apiKey: string): Promise<string | undefined> {
+        return await new Promise((resolve, reject) => {
+            const now = +new Date()/ 1000 | 0;
+            this.mysql.query(
+                'SELECT accountId FROM apiKeys WHERE apiKey = ? AND expiresAt > ?;',
+                [apiKey, now],
+                (err, row) => {
+                if (err) {
+                    return reject(err);
+                }
+
+                if (!row || !Array.isArray(row) || row.length !== 1 || !row[0].accountId) {
+                    return resolve(undefined)
+                }
+                return resolve(row[0].accountId);
+            })
+        })
+    }
+
+   async markExpired(apiKey: string): Promise<void> {
+        return await new Promise((resolve, reject) => {
+            this.mysql.query(
+                'UPDATE apiKeys SET expiresAt = 0 WHERE apiKey = ?;',
+                [apiKey],
+                (err) => {
+                    if (err) {
+                        return reject(err);
+                    }
+                    return resolve();
+                }
+            )
+        })
+    }
+
 }

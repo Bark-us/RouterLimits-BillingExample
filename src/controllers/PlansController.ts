@@ -17,7 +17,8 @@ export class PlansController implements IPlansController {
         return (await this.plans.getAll()).map((p) => {
             return {
                 id: p.id,
-                name: p.name
+                name: p.name,
+                unavailable: p.unavailable || undefined
             }
         });
     }

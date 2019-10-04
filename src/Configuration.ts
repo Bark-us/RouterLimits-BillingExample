@@ -52,4 +52,5 @@ export interface PlanMapping {
     equivalentBillingIds? : Array<string>;
     name : string;
     default?: boolean;
+    unavailable?: boolean;
 }

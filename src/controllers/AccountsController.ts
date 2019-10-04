@@ -135,6 +135,10 @@ export class AccountsController implements IAccountsController {
                 throw new Error("Failed to find plan");
             }
 
+            if (planInfo.unavailable) {
+                throw new Error("Cannot subscribe to unavailable plan");
+            }
+
             return this.lock.acquire(LockNames.WebhookFreeze, async () => {
                 // Subscribe in billing system first - it may fail due to no payment method, etc. But at this point we have
                 // not done anything with RL API, so it's OK

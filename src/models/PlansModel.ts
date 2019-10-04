@@ -63,6 +63,10 @@ export class PlansModel implements IPlansModel {
             throw new Error("A default plan must be configured");
         }
 
+        if (defaultPlan.unavailable) {
+            throw new Error("Default plan must not be unavailable");
+        }
+
         this.defaultPlan = defaultPlan;
     }
 

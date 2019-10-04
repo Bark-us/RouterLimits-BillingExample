@@ -9,6 +9,7 @@ import {PlansModel} from "../models/PlansModel";
 
 describe("AccountsController", () => {
     let controller : IAccountsController;
+    const unavailablePlanId = "nonotme";
 
     beforeEach(() => {
         let rl = new MockRouterLimitsModel();
@@ -17,7 +18,7 @@ describe("AccountsController", () => {
             new MockAccountsModel(),
             new ApiKeysModel(10),
             rl,
-            new PlansModel([{id: "coolplan", name: "Cool Plan", billingId: "billing_coolplan", default: true}]),
+            new PlansModel([{id: "coolplan", name: "Cool Plan", billingId: "billing_coolplan", default: true}, {id: unavailablePlanId, name: "Not Cool", billingId: "asdf", unavailable: true}]),
             new AsyncLock()
         )
     });
@@ -72,6 +73,18 @@ describe("AccountsController", () => {
         methods = await controller.accountPaymentMethodsList(createdInfo.account.id);
         if (methods.length > 0) {
             throw new Error("Expected no methods");
+        }
+
+        // Should throw if we attempt to subscribe to unavailable plan
+        let threw = false;
+        try {
+            await controller.accountUpdate(createdInfo.account.id, {planId: unavailablePlanId});
+        } catch(e) {
+            threw = true;
+        }
+
+        if (!threw) {
+            throw new Error("Expected to fail subscribing to unavailable plan");
         }
     });
 });

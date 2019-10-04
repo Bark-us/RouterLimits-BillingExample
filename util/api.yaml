@@ -163,6 +163,9 @@ definitions:
         type: string
         example: Deluxe Plan
         description: friendly name for the plan
+      unavailable:
+        type: boolean
+        description: If true, this plan cannot accept new subscriptions
   PlanListResponse:
     allOf:
       - $ref: '#/definitions/PaginatedResponse'

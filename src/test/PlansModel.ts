@@ -31,5 +31,15 @@ describe("PlansModel", () => {
        if (!p || p.id !== id || p.name !== name || p.billingId !== billingId) {
            throw new Error("Wrong data");
        }
-   })
+   });
+
+    it("Doesn't allow unavailable default", () => {
+        try {
+            new PlansModel([{id: "id", name: "SomeName", billingId: "SomeBillingId", default:true, unavailable: true}]);
+        } catch(e) {
+            // Good - expect throw
+            return;
+        }
+        throw new Error("Expected error");
+    })
 });

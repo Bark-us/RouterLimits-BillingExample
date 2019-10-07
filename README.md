@@ -3,7 +3,7 @@ This project demonstrates the ability to connect third party billing systems to 
 Stripe is used as an example, but the code can be adapted and extended to support other billing/payment systems.
 
 This project also provides an API that can be used to implement a custom account/billing management experience for end
-users. A web-application front-end for the API is available separately.
+users. A web-application front-end for the API is available separately [here](https://github.com/RouterLimits/PaymentPortalExample).
 
 ## Building
 You will need NodeJS and npm installed. 

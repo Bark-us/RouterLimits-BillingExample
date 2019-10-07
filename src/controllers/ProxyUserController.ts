@@ -32,7 +32,7 @@ export class ProxyUserController implements IProxyUserController {
             throw new Error("Parameter not allowed");
         }
 
-        const res = await api.usersPost(params, {headers: {'x-api-key' : "this.config.routerlimits.apiKey"}});
+        const res = await api.usersPost(params, {headers: {'x-api-key' : this.config.routerlimits.apiKey}});
 
         if (!res || !res.body || !res.body.userId) {
             throw new Error("Unknown error creating user");

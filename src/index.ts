@@ -17,6 +17,7 @@ import AsyncLock from 'async-lock';
 import {PlansController} from "./controllers/PlansController";
 import {ConsoleLoggingModel, LogLevel} from "./models/LoggingModel";
 import mysql from "mysql";
+import {ProxyUserController} from "./controllers/ProxyUserController";
 
 const c : Configuration = config.util.toObject();
 
@@ -51,7 +52,8 @@ const c : Configuration = config.util.toObject();
     const authController : IAuthenticationController = new AuthenticationController(c, accounts, apiKeys);
     const accountsController = new AccountsController(billing, accounts, apiKeys, rl, plans, lock);
     const plansController = new PlansController(plans);
+    const proxyUsersController = new ProxyUserController(c);
 
-    const apiServer = new ApiServer(c, rlWebhooks, billingWebhooks, authController, accountsController, plansController, log);
+    const apiServer = new ApiServer(c, rlWebhooks, billingWebhooks, authController, accountsController, plansController, proxyUsersController, log);
     log.log(LogLevel.INFO, `API and Webhook handlers listening on port ${apiServer.listenPort}`);
 })();

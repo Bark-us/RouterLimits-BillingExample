@@ -15,6 +15,8 @@ import {AccountsReceiver} from "./http/AccountsReceiver";
 import {AuthenticationReceiver} from "./http/AuthenticationReceiver";
 import {AccountAuthObject} from "./http/HttpTypes";
 import {ILoggingModel, LogLevel} from "./models/LoggingModel";
+import {ProxyUsersReceiver} from "./http/ProxyUsersReceiver";
+import {IProxyUserController} from "./controllers/ProxyUserController";
 
 export class ApiServer {
     get listenPort() : number {
@@ -30,6 +32,7 @@ export class ApiServer {
                 authController : IAuthenticationController,
                 accountsController : IAccountsController,
                 plansController : IPlansController,
+                proxyUsersController : IProxyUserController,
                 log : ILoggingModel
     ) {
         this.expressApp = express();
@@ -108,6 +111,7 @@ export class ApiServer {
 
         const accountsReceiver = new AccountsReceiver(accountsController, log);
         const authReceiver = new AuthenticationReceiver(authController, log);
+        const proxyUsersReceiver = new ProxyUsersReceiver(proxyUsersController, log);
 
         // API Healthcheck
         this.expressApp.get('/healthCheck', (req: Request, res: Response, next: express.NextFunction) => {
@@ -165,7 +169,11 @@ export class ApiServer {
             })
             .options(corsWrangler);
 
+        // User proxy
+        this.expressApp.route('/api/proxy/users')
+            .post(corsWrangler, jsonParser, proxyUsersReceiver.userCreate);
 
+        // Error handling
         this.expressApp.use((err : Error, req : Request, res : Response, next : express.NextFunction) => {
             log.log(LogLevel.ERROR, 'Unhandled error in request handlers', {err: err, stack: err.stack});
             res.sendStatus(500);

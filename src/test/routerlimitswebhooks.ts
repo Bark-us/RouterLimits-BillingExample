@@ -22,6 +22,7 @@ import {IRouterLimitsModel, MockRouterLimitsModel} from "../models/RouterLimitsM
 import {PlansController} from "../controllers/PlansController";
 import {IPlansModel, PlansModel} from "../models/PlansModel";
 import {LogLevel, NullLoggingModel} from "../models/LoggingModel";
+import {MockProxyUserController} from "../controllers/ProxyUserController";
 
 const generateTestWebhookObj = () => {
     return {
@@ -97,8 +98,9 @@ describe("Router Limits Webhooks", () => {
             accountsController = new AccountsController(billing, accounts, apiKeys, rl, plans, lock);
             processor = new MockRouterLimitsWebhookController();
             const plansController = new PlansController(plans);
+            const proxyUsersController = new MockProxyUserController();
 
-            api = new ApiServer(config, processor, billingController, authController, accountsController, plansController, new NullLoggingModel());
+            api = new ApiServer(config, processor, billingController, authController, accountsController, plansController, proxyUsersController, new NullLoggingModel());
         });
 
         afterEach(() => {

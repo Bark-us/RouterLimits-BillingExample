@@ -171,7 +171,8 @@ export class ApiServer {
 
         // User proxy
         this.expressApp.route('/api/proxy/users')
-            .post(corsWrangler, jsonParser, proxyUsersReceiver.userCreate);
+            .post(corsWrangler, jsonParser, proxyUsersReceiver.userCreate)
+            .options(corsWrangler);
 
         // Error handling
         this.expressApp.use((err : Error, req : Request, res : Response, next : express.NextFunction) => {

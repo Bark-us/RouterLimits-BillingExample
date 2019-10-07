@@ -174,9 +174,52 @@ definitions:
             type: array
             items:
               $ref: '#/definitions/Plan'
-
-
-
+  UserCreationRequest:
+    type: object
+    properties:
+      firstName:
+        type: string
+      lastName:
+        type: string
+      email:
+        type: string
+        format: email
+      phone:
+        type: string
+      address:
+        type: string
+      address2:
+        type: string
+      address3:
+        type: string
+      city:
+        type: string
+      state:
+        type: string
+      zip:
+        type: string
+      country:
+        type: string
+    required:
+      - firstName
+      - lastName
+      - email
+      - phone
+      - address
+      - city
+      - state
+      - zip
+      - country
+  UserCreateResponse:
+    type: object
+    properties:
+      userId:
+        type: string
+      authorizationRequired:
+        type: boolean
+    required:
+      - userId
+      - authorizationRequired
 paths:
   /authenticate:
     post:
@@ -375,3 +418,22 @@ paths:
           description: These plans are available
           schema:
             $ref: '#/definitions/PlanListResponse'
+  /proxy/users:
+    post:
+      tags:
+        - Proxy
+      description: >-
+        Proxies a request to create a user to the Router Limits API, providing
+        credentials needed to ensure that verification emails are whitelabeled
+        when appropriate
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/UserCreationRequest'
+      responses:
+        '201':
+          description: user created
+          schema:
+            $ref: '#/definitions/UserCreateResponse'

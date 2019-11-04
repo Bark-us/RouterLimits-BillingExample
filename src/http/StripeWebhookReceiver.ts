@@ -2,12 +2,12 @@ import { Request, Response } from "express";
 import {Configuration} from "../Configuration";
 import Stripe from 'stripe';
 import ISubscription = Stripe.subscriptions.ISubscription;
-import {IBillingWebhookController} from "../controllers/BillingWebhookController";
+import {BillingWebhookControllerErrorString, IBillingWebhookController} from "../controllers/BillingWebhookController";
 import {ExpireSet} from "../ExpireSet";
 import IEvent = Stripe.events.IEvent;
 
 export class StripeWebhookReceiver {
-    public readonly router = (req: Request, res: Response) => {
+    public readonly router = async (req: Request, res: Response) => {
         // Validate webhook signature
         const sig = req.header("stripe-signature");
 
@@ -41,12 +41,19 @@ export class StripeWebhookReceiver {
             }
 
             // Handle it
-            return this.billing.handleAccountSubscriptionCancel(event.created, typeof obj.customer === "string" ? obj.customer : obj.customer.id).then(() => {
-                this.usedIds.insert(event.id);
-                return res.sendStatus(204);
-            }).catch((err) => {
+            try {
+                await this.billing.handleAccountSubscriptionCancel(event.created, typeof obj.customer === "string" ? obj.customer : obj.customer.id);
+            }
+            catch(e) {
+                if (e.specialCase === BillingWebhookControllerErrorString.UNKNOWN_ACCOUNT) {
+                    res.status(200);
+                    return res.send("Failed to find account with this billingId");
+                }
                 return res.sendStatus(500);
-            })
+            }
+
+            this.usedIds.insert(event.id);
+            return res.sendStatus(204);
         }
         // We don't care about other events
         else {

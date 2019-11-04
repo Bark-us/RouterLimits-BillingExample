@@ -10,6 +10,18 @@ export interface IBillingWebhookController {
     handleAccountSubscriptionCancel(timestamp : number, billingAccountId : string) : Promise<void>;
 }
 
+export enum BillingWebhookControllerErrorString {
+    UNKNOWN_ACCOUNT = "UNKNOWN_ACCOUNT"
+}
+
+class BillingWebhookControllerError extends Error {
+    public specialCase? : string;
+
+    constructor(m: string) {
+        super(m);
+    }
+}
+
 export class BillingWebhookController implements IBillingWebhookController {
     private readonly accounts : IAccountsModel;
     private readonly rl : IRouterLimitsModel;
@@ -26,7 +38,9 @@ export class BillingWebhookController implements IBillingWebhookController {
             // Lookup Router Limits account id from billing account id
             const accountInfo = await this.accounts.getByBillingId(billingAccountId);
             if (!accountInfo || !accountInfo.id) {
-                throw new Error("Unknown account");
+                const err = new BillingWebhookControllerError("No such account with that billingId");
+                err.specialCase = BillingWebhookControllerErrorString.UNKNOWN_ACCOUNT;
+                throw err;
             }
 
             const rlSubs = await this.rl.getSubscriptions(accountInfo.id);

@@ -3,7 +3,7 @@ import {ExpireSet} from "../ExpireSet";
 import {Request, Response} from "express";
 import {
     RLAccountCanceledWebhookData,
-    RLAccountCreatedWebhookData,
+    RLAccountCreatedWebhookData, RLAccountMovedInWebhookData, RLAccountMovedOutWebhookData,
     RLAccountSubscribedWebhookData,
     Webhook,
     WebhookType
@@ -93,6 +93,22 @@ export class RouterLimitsWebhookReceiver {
             case WebhookType.ACCOUNT_CANCELED:
                 this.controller.handleAccountSubscriptionCancel(webhook.eventTimestamp, (webhook.data as RLAccountCanceledWebhookData).accountId)
                     .then(handleSuccess, handleFailure);
+                break;
+
+            case WebhookType.ACCOUNT_MOVE_IN:
+            {
+                const data = webhook.data as RLAccountMovedInWebhookData;
+                this.controller.handleAccountMoveIn(webhook.eventTimestamp, data.accountId, data.firstName, data.lastName, data.email)
+                    .then(handleSuccess, handleFailure);
+            }
+                break;
+
+            case WebhookType.ACCOUNT_MOVE_OUT:
+            {
+                const data = webhook.data as RLAccountMovedOutWebhookData;
+                this.controller.handleAccountMoveOut(webhook.eventTimestamp, data.accountId)
+                    .then(handleSuccess, handleFailure);
+            }
                 break;
 
             default:

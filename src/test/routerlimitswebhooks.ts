@@ -48,16 +48,19 @@ class MockRouterLimitsWebhookController implements IRouterLimitsWebhookControlle
         this.numProcessed = 0;
     }
 
-    handleAccountCreated(timestamp: number, accountId: string): Promise<void> {
-        return Promise.resolve();
+    async handleAccountCreated(timestamp: number, accountId: string): Promise<void> {
     }
 
-    handleAccountSubscriptionCancel(timestamp: number, accountId: string): Promise<void> {
-        return Promise.resolve();
+    async handleAccountSubscriptionCancel(timestamp: number, accountId: string): Promise<void> {
     }
 
-    handleAccountSubscriptionChange(timestamp: number, accountId: string, planId: string): Promise<void> {
-        return Promise.resolve();
+    async handleAccountSubscriptionChange(timestamp: number, accountId: string, planId: string): Promise<void> {
+    }
+
+    async handleAccountMoveIn(timestamp: number, accountId: string, firstName: string, lastName: string, email: string): Promise<void> {
+    }
+
+    async handleAccountMoveOut(timestamp: number, accountId: string): Promise<void> {
     }
 
 }

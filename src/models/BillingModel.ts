@@ -19,6 +19,8 @@ export interface IBillingModel {
 
     createPaymentMethod(billingId: string, token: string) : Promise<PaymentMethod>;
 
+    deleteCustomer(id: string) : Promise<void>;
+
     deletePaymentMethod(billingId: string, methodId: string) : Promise<void>;
 
     /**
@@ -78,6 +80,10 @@ export class MockBillingModel implements IBillingModel {
         const method = {id: `card_${token}`, cardInfo: {brand: "Schmisa", expMonth: 5, expYear: 99, last4: "1234"}, isDefault: cust.paymentMethods.length <= 0};
         cust.paymentMethods.push(method);
         return method;
+    }
+
+    async deleteCustomer(id: string): Promise<void> {
+        this.customers.delete(id);
     }
 
     async deletePaymentMethod(billingId: string, methodId: string) : Promise<void> {
@@ -171,6 +177,10 @@ export class StripeBillingModel implements IBillingModel {
                 last4: card.last4
             }
         }
+    }
+
+    async deleteCustomer(id: string): Promise<void> {
+        await this.stripe.customers.del(id);
     }
 
     async deletePaymentMethod(billingId: string, methodId: string) : Promise<void> {

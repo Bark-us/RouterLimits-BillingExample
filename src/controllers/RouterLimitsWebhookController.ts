@@ -11,6 +11,8 @@ export interface IRouterLimitsWebhookController {
     handleAccountCreated(timestamp: number, accountId: string, firstName: string, lastName: string, email: string) : Promise<void>;
     handleAccountSubscriptionChange(timestamp : number, accountId : string, planId : string) : Promise<void>;
     handleAccountSubscriptionCancel(timestamp : number, accountId : string) : Promise<void>;
+    handleAccountMoveIn(timestamp: number, accountId: string, firstName: string, lastName: string, email: string) : Promise<void>;
+    handleAccountMoveOut(timestamp: number, accountId: string) : Promise<void>;
 }
 
 export class RouterLimitsWebhookController implements IRouterLimitsWebhookController {
@@ -77,6 +79,30 @@ export class RouterLimitsWebhookController implements IRouterLimitsWebhookContro
                 return this.billing.subscribe(results[0].billingId, results[1].billingId)
             })
         })
+    }
+
+    handleAccountMoveIn(timestamp: number, accountId: string, firstName: string, lastName: string, email: string): Promise<void> {
+        // This will just create their account in the billing system, regardless of what the account is doing in RL.
+        // We would probably like to just force them to our default plan, but if it's paid we need their CC...
+        // TODO if desired, subscribe incoming account to our default (or other) plan. Make config option?
+        return this.handleAccountCreated(timestamp, accountId, firstName, lastName, email);
+    }
+
+    handleAccountMoveOut(timestamp: number, accountId: string): Promise<void> {
+        return this.lock.acquire(LockNames.WebhookFreeze, async () => {
+            const account = await this.accounts.get(accountId);
+
+            // No work to do if account is already gone
+            if (!account) {
+                return;
+            }
+
+            // cancel subscriptions
+            await this.billing.cancel(account.billingId);
+
+            // delete customer from billing system completely - spooky scary!
+            await this.billing.deleteCustomer(account.billingId);
+        });
     }
 
 }

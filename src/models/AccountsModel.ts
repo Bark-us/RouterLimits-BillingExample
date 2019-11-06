@@ -17,6 +17,12 @@ export interface IAccountsModel {
      * @param billingId
      */
     create(id : string, billingId: string) : Promise<Account>;
+
+    /**
+     * Delete an account
+     * @param id
+     */
+    delete(id: string) : Promise<void>;
 }
 
 export interface Account {
@@ -64,10 +70,18 @@ export class MockAccountsModel implements IAccountsModel {
         const a = this.accountsReverse.get(billingId);
         return Promise.resolve(a);
     }
+
+    async delete(id: string): Promise<void> {
+        const a = this.accounts.get(id);
+        if (!a) {
+            return;
+        }
+        this.accountsReverse.delete(a.billingId);
+        this.accounts.delete(a.id);
+    }
 }
 
 export class SQLiteAccountsModel implements IAccountsModel {
-
     private readonly db : sqlite3.Database;
 
     static createInstance(dbName : string) : Promise<SQLiteAccountsModel> {
@@ -126,6 +140,18 @@ export class SQLiteAccountsModel implements IAccountsModel {
         })
     }
 
+    delete(id: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.db.run('DELETE FROM `accounts` WHERE rlId = ?;', id, (err: Error) => {
+                if (err) {
+                    return reject(err);
+                }
+
+                return resolve();
+            })
+        })
+    }
+
     get(id: string): Promise<Account | undefined> {
         return new Promise((resolve, reject) => {
             this.db.get('SELECT `billingId` FROM `accounts` WHERE `rlId` = ?', id, (err, row) => {
@@ -178,6 +204,22 @@ export class MySQLAccountsModel implements IAccountsModel {
                     }
 
                     return resolve({id : id, billingId : billingId});
+                }
+            )
+        })
+    }
+
+    delete(id: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.mysql.query(
+                'DELETE FROM `accounts` WHERE `rlId` = ?;',
+                [id],
+                (err) => {
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    return resolve();
                 }
             )
         })

@@ -47,7 +47,7 @@ const c : Configuration = config.util.toObject();
 
     const lock = new AsyncLock();
 
-    const rlWebhooks : IRouterLimitsWebhookController = new RouterLimitsWebhookController(billing, accounts, plans, lock);
+    const rlWebhooks : IRouterLimitsWebhookController = new RouterLimitsWebhookController(billing, accounts, plans, rl, lock);
     const billingWebhooks : IBillingWebhookController = new BillingWebhookController(accounts, rl, lock);
     const authController : IAuthenticationController = new AuthenticationController(c, accounts, apiKeys);
     const accountsController = new AccountsController(billing, accounts, apiKeys, rl, plans, lock);

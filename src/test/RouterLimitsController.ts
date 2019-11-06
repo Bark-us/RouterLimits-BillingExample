@@ -5,6 +5,7 @@ import {RouterLimitsWebhookController} from "../controllers/RouterLimitsWebhookC
 import {MockBillingModel} from "../models/BillingModel";
 import {MockAccountsModel} from "../models/AccountsModel";
 import {PlansModel} from "../models/PlansModel";
+import {MockRouterLimitsModel} from "../models/RouterLimitsModel";
 
 describe("RouterLimitsWebhookController", () => {
     describe("Unit tests", () => {
@@ -19,15 +20,17 @@ describe("RouterLimitsWebhookController", () => {
 
         let billing : MockBillingModel;
         let accounts : MockAccountsModel;
+        let rl : MockRouterLimitsModel;
         let plans : PlansModel;
         let rlc : RouterLimitsWebhookController;
 
         beforeEach(() => {
             billing = new MockBillingModel();
             accounts = new MockAccountsModel();
+            rl = new MockRouterLimitsModel();
             plans = new PlansModel(fakePlans);
 
-            rlc = new RouterLimitsWebhookController(billing, accounts, plans, new AsyncLock());
+            rlc = new RouterLimitsWebhookController(billing, accounts, plans, rl, new AsyncLock());
         });
 
         describe("handleAccountCreated", () => {
@@ -107,6 +110,48 @@ describe("RouterLimitsWebhookController", () => {
                     return Promise.resolve();
                 })
             })
+        });
+
+        describe("handleAccountMoveIn", () => {
+            it("Works with no moveInDefault", async () => {
+                const accountId = await rl.createAccount("asdf123");
+                await rlc.handleAccountMoveIn(makeTimestamp(), accountId, testFirstName, testLastname, testEmail);
+            });
+
+            it("Works with moveInDefault", async () => {
+                plans = new PlansModel([{id : planId, billingId: billingPlanId, name: "Cat's Pajamas", default: true, moveInDefault: true}]);
+                rlc = new RouterLimitsWebhookController(billing, accounts, plans, rl, new AsyncLock());
+
+                const accountId = await rl.createAccount("asdf123");
+                await rlc.handleAccountMoveIn(makeTimestamp(), accountId, testFirstName, testLastname, testEmail);
+            });
+        });
+
+        describe("handleAccountMoveOut", () => {
+            it("Works", async () => {
+
+                const billingId = await billing.createCustomer(testFirstName, testLastname, testEmail);
+                const rlId = await rl.createAccount("whatever");
+                const account = await accounts.create(rlId, billingId);
+
+                await rlc.handleAccountMoveOut(makeTimestamp(), account.id);
+
+                let itFailed = false;
+                try {
+                    await billing.get(billingId)
+                }
+                catch(e) {
+                    itFailed = true;
+                }
+
+                if (!itFailed) {
+                    throw new Error("Expected billing to be gone");
+                }
+
+                if (await accounts.get(account.id)) {
+                    throw new Error("Expected account to be gone");
+                }
+            });
         });
     });
 });

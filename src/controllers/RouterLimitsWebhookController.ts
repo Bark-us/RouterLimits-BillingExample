@@ -3,6 +3,7 @@ import {IBillingModel} from "../models/BillingModel";
 import {IAccountsModel} from "../models/AccountsModel";
 import {IPlansModel} from "../models/PlansModel";
 import {LockNames} from "../Constants";
+import {IRouterLimitsModel} from "models/RouterLimitsModel";
 
 /**
  * Represents a class which has the "business logic" of handling the Router Limits webhooks
@@ -19,12 +20,14 @@ export class RouterLimitsWebhookController implements IRouterLimitsWebhookContro
     private readonly billing : IBillingModel;
     private readonly accounts : IAccountsModel;
     private readonly plans : IPlansModel;
+    private readonly rl : IRouterLimitsModel;
     private readonly lock: AsyncLock;
 
-    constructor(billing : IBillingModel, accounts : IAccountsModel, plans : IPlansModel, lock: AsyncLock) {
+    constructor(billing : IBillingModel, accounts : IAccountsModel, plans : IPlansModel, rl: IRouterLimitsModel, lock: AsyncLock) {
         this.billing = billing;
         this.accounts = accounts;
         this.plans = plans;
+        this.rl = rl;
         this.lock = lock;
     }
 
@@ -82,10 +85,35 @@ export class RouterLimitsWebhookController implements IRouterLimitsWebhookContro
     }
 
     handleAccountMoveIn(timestamp: number, accountId: string, firstName: string, lastName: string, email: string): Promise<void> {
-        // This will just create their account in the billing system, regardless of what the account is doing in RL.
-        // We would probably like to just force them to our default plan, but if it's paid we need their CC...
-        // TODO if desired, subscribe incoming account to our default (or other) plan. Make config option?
-        return this.handleAccountCreated(timestamp, accountId, firstName, lastName, email);
+        return this.lock.acquire(LockNames.WebhookFreeze, async () => {
+            let account = await this.accounts.get(accountId);
+
+            // If no account in our records and billing system, create
+            if (!account) {
+                // Create customer in billing system
+                const billingId = await this.billing.createCustomer(firstName, lastName, email);
+
+                // Create mapping between billing system customer and Router Limits account
+                account = await this.accounts.create(accountId, billingId);
+            }
+
+            const moveInDefaultPlan = await this.plans.getMoveInDefault();
+
+            // If no move-in plan is specified, make sure they're inactive in Router Limits
+            if (!moveInDefaultPlan) {
+                await this.rl.cancel(account.id);
+                return;
+            }
+
+            // Find out current plan in RL
+            const currentRlPlan = await this.rl.getSubscriptions(account.id);
+
+            // Only change their sub to our desired one if they're active
+            if (currentRlPlan.length > 0) {
+                await this.rl.subscribe(account.id, moveInDefaultPlan.id);
+            }
+
+        });
     }
 
     handleAccountMoveOut(timestamp: number, accountId: string): Promise<void> {
@@ -97,11 +125,14 @@ export class RouterLimitsWebhookController implements IRouterLimitsWebhookContro
                 return;
             }
 
-            // cancel subscriptions
+            // cancel billing subscriptions
             await this.billing.cancel(account.billingId);
 
             // delete customer from billing system completely - spooky scary!
             await this.billing.deleteCustomer(account.billingId);
+
+            // delete the mapping
+            await this.accounts.delete(accountId);
         });
     }
 

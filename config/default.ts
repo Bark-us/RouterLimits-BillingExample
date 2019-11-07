@@ -1,5 +1,7 @@
 import {Configuration} from "Configuration.ts";
 
+// NOTE see Configuration.ts for more details on the structure of this file
+
 const c : Configuration = {
     api: {
         // Our API (including webhook handlers) will run on this port

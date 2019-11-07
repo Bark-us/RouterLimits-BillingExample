@@ -70,7 +70,9 @@ export class RLPlan {
     }
 }
 
-type RLWebhookData = RLAccountCreatedWebhookData | RLAccountCanceledWebhookData | RLAccountSubscribedWebhookData;
+export type RLAccountMovedInWebhookData = RLAccountCreatedWebhookData;
+export type RLAccountMovedOutWebhookData = RLAccountCanceledWebhookData;
+type RLWebhookData = RLAccountCreatedWebhookData | RLAccountCanceledWebhookData | RLAccountSubscribedWebhookData | RLAccountMovedInWebhookData | RLAccountMovedOutWebhookData;
 
 export class Webhook {
     readonly attempt : number;
@@ -90,7 +92,13 @@ export class Webhook {
         ) {
             const eventType = (() => {
                 const s = obj["eventType"];
-                const type = [WebhookType.ACCOUNT_CREATED, WebhookType.ACCOUNT_SUBSCRIBED, WebhookType.ACCOUNT_CANCELED].find((t) => {
+                const type = [
+                    WebhookType.ACCOUNT_CREATED,
+                    WebhookType.ACCOUNT_SUBSCRIBED,
+                    WebhookType.ACCOUNT_CANCELED,
+                    WebhookType.ACCOUNT_MOVE_IN,
+                    WebhookType.ACCOUNT_MOVE_OUT
+                ].find((t) => {
                     return t === s;
                 });
 
@@ -102,13 +110,13 @@ export class Webhook {
 
             const data = (() => {
                 let data : RLWebhookData;
-                if (eventType === WebhookType.ACCOUNT_CREATED) {
+                if (eventType === WebhookType.ACCOUNT_CREATED || eventType === WebhookType.ACCOUNT_MOVE_IN) {
                     data = RLAccountCreatedWebhookData.fromObj(obj["data"]);
                 }
                 else if (eventType === WebhookType.ACCOUNT_SUBSCRIBED) {
                     data = RLAccountSubscribedWebhookData.fromObj(obj["data"]);
                 }
-                else if (eventType === WebhookType.ACCOUNT_CANCELED) {
+                else if (eventType === WebhookType.ACCOUNT_CANCELED || eventType === WebhookType.ACCOUNT_MOVE_OUT) {
                     data = RLAccountCanceledWebhookData.fromObj(obj["data"]);
                 }
                 else {
@@ -142,5 +150,7 @@ export class Webhook {
 export enum WebhookType {
     ACCOUNT_CREATED = "ACCOUNT_CREATED",
     ACCOUNT_SUBSCRIBED = "ACCOUNT_SUBSCRIBED",
-    ACCOUNT_CANCELED = "ACCOUNT_CANCELED"
+    ACCOUNT_CANCELED = "ACCOUNT_CANCELED",
+    ACCOUNT_MOVE_IN = "ACCOUNT_MOVE_IN",
+    ACCOUNT_MOVE_OUT = "ACCOUNT_MOVE_OUT"
 }

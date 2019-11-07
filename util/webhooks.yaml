@@ -3,7 +3,8 @@ info:
   title: Router Limits Webhooks
   license:
     name: All Rights Reserved, Copyright 2019
-  version: 1.0.0
+  version: 1.1.0
+  description: These are the webhooks that Router Limits can fire to your organization-configured endpoint.
 servers:
   - url: https://yourapi.example.net/webhooks/routerlimits
 paths:
@@ -42,9 +43,11 @@ paths:
                   $ref: '#/components/schemas/WebhookEventType'
                 data:
                   oneOf:
-                    - $ref: '#/components/schemas/AccountsListResponse'
+                    - $ref: '#/components/schemas/WebhookAccountCreated'
                     - $ref: '#/components/schemas/WebhookAccountDeleted'
                     - $ref: '#/components/schemas/WebhookAccountSubscribed'
+                    - $ref: '#/components/schemas/WebhookAccountMovedIn'
+                    - $ref: '#/components/schemas/WebhookAccountMovedOut'
         required: true
       responses:
         204:
@@ -52,399 +55,50 @@ paths:
           content: {}
 components:
   schemas:
-    AccountsListResponse:
-      required:
-        - accountBalance
-        - createdAt
-        - entitlements
-        - everBeenActive
-        - id
-        - trialsUsed
-        - userId
+    Plan:
       type: object
-      properties:
-        id:
-          type: string
-          description: the id of the account
-          example: gdfl4j
-        userId:
-          type: string
-          description: the id of the user that owns the account
-          example: dls93
-        user:
-          $ref: '#/components/schemas/CommonUserReturn'
-        routerPairingCode:
-          type: string
-          description: the pairing code (or MAC for legacy routers) of the router
-            attached to the account
-          example: "123451234512345"
-        router:
-          $ref: '#/components/schemas/CommonRouterReturn'
-        createdAt:
-          type: integer
-          description: UNIX timestamp of the time when the account was created
-          format: int32
-          example: 1234567890
-        parentOrganizationId:
-          type: string
-          description: the id of the organization that gets credit for the account
-          example: ugjw4
-        accountBalance:
-          type: number
-          description: The amount of credit that account has in US dollars
-          format: float
-          example: 0.01
-        trialsUsed:
-          type: array
-          description: List of plans that the account has already used trial on
-          items:
-            type: string
-            example: coolPlanId
-        everBeenActive:
-          type: boolean
-          description: True if the account has ever been activated. False otherwise.
-        entitlements:
-          type: array
-          description: An array of entitlement objects, describing the things that
-            the account can do
-          items:
-            required:
-              - name
-              - value
-            type: object
-            properties:
-              name:
-                type: string
-                description: the name of the entitlement
-                example: CAN_ACCESS_WIDGETS
-              value:
-                type: integer
-                description: The value of the entitlement
-                format: int32
-                example: 1
-    CommonRouterCapabilities:
-      type: array
-      description: A list of capabilities that this router has. These capabilities
-        can vary depending on the model of the router and the firmware/client version
-        it is running.
-      items:
-        type: string
-        enum:
-          - perftest
-          - bandwidth
-    CommonRouterReturn:
-      required:
-        - account
-        - connected
-        - interfaces
-        - model
-        - oem
-        - version
-      type: object
-      properties:
-        connected:
-          type: boolean
-          description: true if the router is connected, false otherwise
-        mac:
-          type: string
-          description: For certain hardware, the identifying MAC address of the device
-            (RL-100, RL-150, RL-160).
-          example: 00:11:22:33:44:55
-        publicIp:
-          type: string
-          description: The current public IP address of the router, if known
-          format: ipv4
-          example: 165.45.23.3
-        version:
-          type: string
-          description: the version of the Router Limits software running on the hardware
-          example: "2.5"
-        oem:
-          type: string
-          description: the manufacturer/provider of the hardware. May be null
-          example: ACME, Inc.
-        model:
-          type: string
-          description: the model of the device
-          example: MegaRouter
-        interfaces:
-          type: array
-          items:
-            required:
-              - ip
-              - mac
-              - name
-            type: object
-            properties:
-              ip:
-                type: string
-                description: the IP address of the interface. Currently only IPv4
-                  addresses are supported here
-                format: ipv4
-                example: 192.168.6.1
-              name:
-                type: string
-                description: the name of the network interface
-                example: eth0
-              mac:
-                type: string
-                description: the MAC address of the network interface
-                example: 00:11:22:33:44:55
-            description: a list of objects describing network interfaces of the hardware
-        pairingCode:
-          type: string
-          description: For hardware that supports pairing codes, the pairing code
-            the hardware.
-          example: "555554444477777"
-        seenAt:
-          type: string
-          description: If the router has ever connected, the router was connected
-            at least as recently as this timestamp.
-          example: 2017-02-07T20:28:12.000Z
-        account:
-          type: object
-          properties:
-            id:
-              type: string
-              description: the id of the account that has activated this router. Not
-                set the router is not activated on an account
-              example: gbkxl95j
-            parentOrganizationId:
-              type: string
-              description: the id of the organization that activated the account
-              example: ac895gg4
-          description: account information about the account that is paired with the
-            router
-        capabilities:
-          $ref: '#/components/schemas/CommonRouterCapabilities'
-    CommonUserReturn:
-      required:
-        - email
-        - firstName
-        - id
-        - lastName
-        - phone
-        - roles
-      type: object
-      properties:
-        id:
-          type: string
-          description: The id of the user
-        firstName:
-          type: string
-          example: Timmy
-        lastName:
-          type: string
-          example: O'Toole
-        email:
-          type: string
-          format: email
-        phone:
-          type: string
-          example: +18015555555
-        address:
-          type: string
-        address2:
-          type: string
-        address3:
-          type: string
-        city:
-          type: string
-        state:
-          type: string
-        zip:
-          type: string
-        country:
-          type: string
-        roles:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserRole'
-        accountId:
-          type: string
-          description: The id of the account that the user owns, if any
-        organization:
-          $ref: '#/components/schemas/OrganizationResponse'
-        parentOrganization:
-          $ref: '#/components/schemas/OrganizationResponse'
-    OrganizationResponse:
       required:
         - id
         - name
-      type: object
       properties:
-        id:
-          type: string
-          description: unique id of the organization
-          example: 6jf8sj5n
-        name:
-          type: string
-          description: Name of the organization
-          example: ACME, Inc.
-        address:
-          type: string
-          example: 123 Fake Street
-        address2:
-          type: string
-          example: Suite 123
-        address3:
-          type: string
-          example: Cupboard under the stairs
-        city:
-          type: string
-          example: Springfield
-        state:
-          type: string
-          example: GA
-        zip:
-          type: string
-          example: "12345"
-        country:
-          type: string
-          example: United States
-        allowInvoicing:
-          type: boolean
-          description: True if the organization is allowed to bill customers directly.
-            False if Router Limits handles billing
-        allowWhiteLabel:
-          type: boolean
-          description: White labeled interface is allowed for this Organization
-        allowCoLabel:
-          type: boolean
-          description: Co-labeled interface is allowed for this Organization
-        enabledPluginTypes:
-          type: array
-          items:
-            $ref: '#/components/schemas/PluginType'
-        webhookUrl:
-          type: string
-          description: organization-configured endpoint where Router Limits API should
-            post webhooks
-          example: https://api.someorg.example.net/webhookreceiver
-        ssoUrl:
-          type: string
-          description: organization-configured endpoint where Router Limits should
-            send end users with JWTs for SSO into an organization billing portal
-          example: https://someorg.example.net/portal/ssoreceiver
-        maxAccounts:
-          type: integer
-          description: The maximum number of accounts this organization is allowed
-            to manage, if configured
-        styles:
-          type: object
-          properties:
-            colorPrimary:
-              type: string
-              example: '#ff0000'
-            colorTextHeader:
-              type: string
-              example: '#ff0000'
-            logo2:
-              type: string
-              description: Public URL to uploaded a logo for an Organization to be
-                placed on the login screen
-              example: https://static.routerlimits.com/organizations/test-34dg734m.png
-            colorPrimaryHover:
-              type: string
-              example: '#ff0000'
-            favicon:
-              type: string
-              description: Public URL to uploaded 16x16 favicon for an organization
-              example: https://static.routerlimits.com/organizations/test-34dg734m.png
-            colorSideNav:
-              type: string
-              example: '#ff0000'
-            emailFromAddress:
-              type: string
-              format: email
-            colorTertiary:
-              type: string
-              example: '#ff0000'
-            colorSecondary:
-              type: string
-              example: '#ff0000'
-            colorTextPrimary:
-              type: string
-              example: '#ff0000'
-            colorTextSecondary:
-              type: string
-              example: '#ff0000'
-            portalTitle:
-              type: string
-              description: the title that should be used for the HTML title tag on
-                the whitelabeled portal. If null is set, the organization name will
-                be used.
-              example: ACME Protection Portal
-            emailReplyToAddress:
-              type: string
-              format: email
-            emailFromName:
-              type: string
-            emailNoun:
-              type: string
-              description: A proper noun that should be used in emails in place of
-                'Router Limits'. If null, 'Router Limits' will be used.
-            colorSuccess:
-              type: string
-              example: '#ff0000'
-            logo:
-              type: string
-              description: Public URL to uploaded logo of Organization
-              example: https://static.routerlimits.com/organizations/test-34dg734m.png
-            colorWarn:
-              type: string
-              example: '#ff0000'
-          description: Custom styling for the Organization's users
-        tags:
-          type: array
-          items:
-            required:
-              - name
-              - value
-            type: object
-            properties:
-              name:
-                type: string
-              value:
-                type: string
-      description: Information about an organization. Some endpoints may only return
-        a subset of these fields.
-    Plan:
-      type: object
-      properties:
-        trialPeriod:
-          type: integer
-          description: number of days of free trial on the plan
         name:
           type: string
           example: Premium Ultra Deluxe
-        flags:
-          type: array
-          description: a set of flags that convey information about the
-            plan
-          items:
-            type: string
-            example: premium
         id:
           type: string
           example: coolPlan3
-    PluginType:
-      type: string
-      enum:
-        - ticketing
-    UserRole:
-      type: string
-      description: Describes a role that a user might have such as pro or admin
-      enum:
-        - pro
-        - admin
-        - activated
     WebhookEventType:
       type: string
       enum:
         - ACCOUNT_CREATED
         - ACCOUNT_SUBSCRIBED
         - ACCOUNT_CANCELED
+        - ACCOUNT_MOVE_IN
+        - ACCOUNT_MOVE_OUT
+    WebhookAccountCreated:
+      type: object
+      required:
+        - id
+        - user
+      properties:
+        id:
+          type: string
+          description: id of the account
+        user:
+          type: object
+          description: Information about the user linked to the account
+          required:
+            - firstName
+            - lastName
+            - email
+          properties:
+            firstName:
+              type: string
+            lastName:
+              type: string
+            email:
+              type: string
+              format: email
     WebhookAccountDeleted:
       type: object
       required:
@@ -454,6 +108,10 @@ components:
           type: string
           description: id of the account being canceled
           minLength: 1
+    WebhookAccountMovedIn:
+      $ref: '#/components/schemas/WebhookAccountCreated'
+    WebhookAccountMovedOut:
+      $ref: '#/components/schemas/WebhookAccountDeleted'
     WebhookAccountSubscribed:
       type: object
       required:

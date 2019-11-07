@@ -20,6 +20,8 @@ export interface IPlansModel {
      * Get the configured default plan
      */
     getDefault() : Promise<PlanMapping | undefined>;
+
+    getMoveInDefault() : Promise<PlanMapping | undefined>;
 }
 
 export class PlansModel implements IPlansModel {
@@ -27,6 +29,7 @@ export class PlansModel implements IPlansModel {
     private readonly billingPlanstoPlans : Map<string, PlanMapping>;
     private readonly equivalentBillingPlanstoPlans : Map<string, PlanMapping>;
     private readonly defaultPlan : PlanMapping;
+    private readonly moveInDefaultPlan? : PlanMapping;
 
     constructor(plans : Array<PlanMapping>) {
         this.rlPlansToPlans = new Map();
@@ -36,12 +39,20 @@ export class PlansModel implements IPlansModel {
         // Loop through the PlanMappings and index them.
         // Also find the default plan. Make sure there is exactly one
         let defaultPlan : PlanMapping | undefined;
+        let moveInDefaultPlan : PlanMapping | undefined;
         plans.forEach((p) => {
             if (p.default) {
                 if (defaultPlan) {
                     throw new Error("Only a single default is allowed");
                 }
                 defaultPlan = p;
+            }
+
+            if (p.moveInDefault) {
+                if (moveInDefaultPlan) {
+                    throw new Error("Only a single move-in default is allowed");
+                }
+                moveInDefaultPlan = p;
             }
 
             this.rlPlansToPlans.set(p.id, p);
@@ -68,6 +79,7 @@ export class PlansModel implements IPlansModel {
         }
 
         this.defaultPlan = defaultPlan;
+        this.moveInDefaultPlan = moveInDefaultPlan;
     }
 
     async get(id: string): Promise<PlanMapping | undefined> {
@@ -91,5 +103,9 @@ export class PlansModel implements IPlansModel {
 
     async getDefault(): Promise<PlanMapping | undefined> {
         return this.defaultPlan;
+    }
+
+    async getMoveInDefault(): Promise<PlanMapping | undefined> {
+        return this.moveInDefaultPlan;
     }
 }

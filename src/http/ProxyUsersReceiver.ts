@@ -22,8 +22,17 @@ export class ProxyUsersReceiver {
             }
             else if (e.response) {
                 this.log.log(LogLevel.ERROR, "Error doing proxy user create", {remoteStatus: e.response.statusCode, body: e.response.body});
+
+                if(e.response.body && e.response.body.message) {
+                    res.statusMessage = e.response.body.message;
+                    res.statusCode = e.response.statusCode;
+                    res.send();
+                }
+
+                return;
             }
-            res.sendStatus(500);
+
+            res.send(500);
             return;
         }
 
